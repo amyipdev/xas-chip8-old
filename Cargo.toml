@@ -1,0 +1,12 @@
+[package]
+name = "xas"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# half the non-std/core size comes from regex
+# is there any way it can be shrunk? at time of writing
+# release = 5.1M, debug = 15M
+regex = "1.6.0"
