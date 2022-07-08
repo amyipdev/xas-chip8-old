@@ -10,6 +10,8 @@
 // TODO: use cargo-msrv to determine minimum rust version
 // TODO: proper logging via interface w/ log crate (use all 5 levels)
 //       - consider hiding behind a feature
+// TODO: when doing readme, set up badges (don't forget codecov)
+// TODO: benchmarks, tests, examples
 
 use std::collections::VecDeque;
 
