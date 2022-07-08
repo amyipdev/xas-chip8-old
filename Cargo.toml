@@ -1,5 +1,6 @@
 [package]
-name = "xas"
+name = "libxas"
+# v1.0 will be the first "production-ready" version
 version = "0.1.0"
 edition = "2021"
 
@@ -10,3 +11,7 @@ edition = "2021"
 # is there any way it can be shrunk? at time of writing
 # release = 5.1M, debug = 15M
 regex = "1.6.0"
+
+[lib]
+name = "libxas"
+path = "src/lib.rs"

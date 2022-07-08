@@ -5,7 +5,6 @@
 // TODO: CI
 // TODO: tests
 // TODO: examples
-// TODO: convert from executable to library
 // TODO: publish on crates.io
 // TODO: fill out crate manifest
 // TODO: use cargo-msrv to determine minimum rust version

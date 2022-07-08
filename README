@@ -1,0 +1,7 @@
+This is a temporary README while the real one is created.
+
+Currently if you would like to use this respository, while it 
+is not officially licensed yet, follow the terms of the GPLv2.
+
+Build:
+`cargo build`
