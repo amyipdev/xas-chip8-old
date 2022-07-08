@@ -13,6 +13,7 @@
 // TODO: when doing readme, set up badges (don't forget codecov)
 // TODO: benchmarks, tests, examples
 // TODO: migrate TODOs to GitHub issues/milestones
+// TODO: documentation + other repo setup
 
 use std::collections::VecDeque;
 
