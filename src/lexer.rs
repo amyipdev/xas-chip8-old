@@ -8,7 +8,8 @@
 // TODO: publish on crates.io
 // TODO: fill out crate manifest
 // TODO: use cargo-msrv to determine minimum rust version
-// TODO: actually get this set up on github
+// TODO: proper logging via interface w/ log crate (use all 5 levels)
+//       - consider hiding behind a feature
 
 use std::collections::VecDeque;
 
