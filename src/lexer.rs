@@ -12,6 +12,7 @@
 //       - consider hiding behind a feature
 // TODO: when doing readme, set up badges (don't forget codecov)
 // TODO: benchmarks, tests, examples
+// TODO: migrate TODOs to GitHub issues/milestones
 
 use std::collections::VecDeque;
 
