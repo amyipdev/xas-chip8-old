@@ -24,7 +24,7 @@
 // TODO: readme (rst? md? decide)
 // TODO: styling guide
 //       - mod/crate/use order
-// TODO: CI
+// TODO: improve CI (see PR #2)
 // TODO: tests
 // TODO: examples
 // TODO: publish on crates.io
@@ -37,6 +37,7 @@
 // TODO: migrate TODOs to GitHub issues/milestones
 // TODO: documentation + other repo setup
 // TODO: set github to default to rebasing instead of merges
+// TODO: consider fully migrating to GitLab, or as an ecosystem
 
 use std::collections::VecDeque;
 
