@@ -36,6 +36,7 @@
 // TODO: benchmarks, tests, examples
 // TODO: migrate TODOs to GitHub issues/milestones
 // TODO: documentation + other repo setup
+// TODO: set github to default to rebasing instead of merges
 
 use std::collections::VecDeque;
 
