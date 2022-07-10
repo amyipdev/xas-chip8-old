@@ -37,6 +37,9 @@
 // TODO: migrate TODOs to GitHub issues/milestones
 // TODO: documentation + other repo setup
 // TODO: set github to default to rebasing instead of merges
+// TODO: proper gitignore, don't keep garbage like Cargo.lock
+// TODO: what the hell is going on with binary sizing?
+// TODO: GH Pages? Whatever, something representing the library needs setup for crates
 
 use std::collections::VecDeque;
 

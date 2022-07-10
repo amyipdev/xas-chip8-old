@@ -1,8 +1,22 @@
 [package]
 name = "libxas"
 # v1.0 will be the first "production-ready" version
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+authors = ["Amy Parker <apark0006@student.cerritos.edu>"]
+description = "Extendable Assembler library"
+# This documentation flag will not be true until the crate is published
+documentation = "https://docs.rs/libxas"
+# When the README is converted the file name needs to be changed
+# Because of crates we should probably use Markdown
+readme = "README"
+#homepage =
+repository = "https://github.com/amyipdev/libxas"
+license = "GPL-2.0-or-later"
+keywords = ["assembly", "library", "assembler", "moddable", "extension"]
+categories = ["compilers"]
+# if we need a build script, change this
+build = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,3 +29,6 @@ regex = "1.6.0"
 [lib]
 name = "libxas"
 path = "src/lib.rs"
+
+[badges]
+maintenance = { status = "actively-developed" }
