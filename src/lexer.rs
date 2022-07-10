@@ -28,7 +28,6 @@
 // TODO: tests
 // TODO: examples
 // TODO: publish on crates.io
-// TODO: fill out crate manifest
 // TODO: use cargo-msrv to determine minimum rust version
 // TODO: proper logging via interface w/ log crate (use all 5 levels)
 //       - consider hiding behind a feature
