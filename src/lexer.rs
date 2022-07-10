@@ -24,7 +24,7 @@
 // TODO: readme (rst? md? decide)
 // TODO: styling guide
 //       - mod/crate/use order
-// TODO: CI
+// TODO: improve CI (see PR #2)
 // TODO: tests
 // TODO: examples
 // TODO: publish on crates.io
@@ -36,6 +36,7 @@
 // TODO: migrate TODOs to GitHub issues/milestones
 // TODO: documentation + other repo setup
 // TODO: set github to default to rebasing instead of merges
+// TODO: consider fully migrating to GitLab, or as an ecosystem
 // TODO: proper gitignore, don't keep garbage like Cargo.lock
 // TODO: what the hell is going on with binary sizing?
 // TODO: GH Pages? Whatever, something representing the library needs setup for crates
