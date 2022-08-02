@@ -294,6 +294,7 @@ impl Lexer {
             // TODO: is there anything better here than match?
             // NOTE: _ is unreachable, this is a safety measure while indev
             // FIXME consider removing it in cleanup
+            // TODO: move this responsibility over to BBU global thanks to ArchArg
             let op: LexOperation = match self.p.arch {
                 crate::platform::PlatformArch::ChipEightRaw => {
                     LexOperation::Instruction(Box::new(crate::bbu::chip8_raw::get_instruction(i)))
