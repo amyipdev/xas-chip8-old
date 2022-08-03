@@ -76,6 +76,7 @@ pub struct Parser {
 }
 
 impl std::str::FromStr for Parser {
+    // TODO FIXME better error type
     type Err = std::num::ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -143,11 +144,11 @@ impl Parser {
         while self.parse_line() {}
     }
 
-    // TODO: parse_all
     pub fn parse_line(&mut self) -> bool {
         // rust doesn't know how to read assignment context properly
         // we need to predefine it for scoping issues... can't define as null
         // FIXME if there's a better way to null-init a string (change to note otherwise)
+
         let mut a: String = String::new();
         if let Some(s) = self.pop_queued() {
             a = s;
@@ -156,6 +157,7 @@ impl Parser {
         }
         // TODO: consider changing more matches to regex (do perf analysis)
         // TODO: try limiting size of regex crate if possible given the few invocations
+        // TODO FIXME FIXME avoid/get rid of regex due to speed issues
         let re: regex::Regex = regex::Regex::new(r"//|;").unwrap();
         // TODO: investigate removing unwrap somehow, what happens here? can it panic?
         a = re.split(a.trim_start()).next().unwrap().to_string();
@@ -166,7 +168,7 @@ impl Parser {
         let b: (String, String) = single_split(a);
         let mut ar: Vec<String> = vec![];
         if b.1.trim_start() != "" {
-            for n in b.1.split(",") {
+            for n in acs_from_str(&b.1) {
                 ar.push(n.trim().to_string());
             }
         }
@@ -197,5 +199,53 @@ impl Parser {
         }
 
         true
+    }
+}
+
+// Proper comma splitting algorithm
+// Splits on commas as long as they aren't in parentheses
+// TODO NOTE move into some sort of utilities file/external library, could be useful elsewhere... maybe an "arsu" crate with various utilities?
+// NOTE should this be made pub?
+// FIXME this needs major changes and updates, optimizations, etc
+struct ArgCommaSplitter<'a> {
+    p: bool,
+    c: core::iter::Peekable<std::str::Bytes<'a>>,
+}
+
+// TODO optimize
+impl Iterator for ArgCommaSplitter<'_> {
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let None = self.c.peek() {return None;}
+        let mut pool: Vec<u8> = Vec::new();
+        loop {
+            // based on there being absolutely no nested parentheses
+            // if nested parentheses are supported, check self.p beforehand NOTE
+            match self.c.next() {
+                // is match actually the best choice here due to code dup?
+                // NOTE TODO code dup
+                Some(b'(') => {self.p = true; pool.push(b'(');},
+                Some(b')') => {self.p = false; pool.push(b')');},
+                Some(b',') => {
+                    if !self.p {
+                        return Some(String::from_utf8(pool).unwrap());
+                    } else {
+                        pool.push(b',');
+                    }
+                }
+                // NOTE TODO code dup
+                None => return Some(String::from_utf8(pool).unwrap()),
+                Some(v) => pool.push(v),
+            }
+        }
+    }
+}
+
+// TODO: make project FromStr trait, maybe in utilities?
+pub fn acs_from_str(s: &str) -> impl Iterator<Item = String> + '_ {
+    ArgCommaSplitter {
+        p: false,
+        c: s.bytes().peekable(),
     }
 }

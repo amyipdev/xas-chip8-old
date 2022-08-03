@@ -198,13 +198,20 @@ pub fn parse_argument<T>(p: &crate::platform::Platform, a: &String) -> Option<Ar
 
  */
 
+// TODO NOTE FIXME consider refactoring all of this into parser, so it happens pre-lexing?? maybe??
+
+// TODO NOTE FIXME determine Box vs immutable reference for trait object size fitting, as well as the usage of boxes in general
+
 // TODO: UpperCamelCase/PascalCase these trait names
 // TODO: Document all these types
-pub trait PTR_SIZE: core::ops::Add + core::ops::Sub + Sized {}
-pub trait DAT_SIZE: core::ops::Add + core::ops::Sub + Sized {}
-pub trait DIS_SIZE: core::ops::Add + core::ops::Sub + Sized {}
+// TODO: NOTE clean definition duplication
+pub trait PTR_SIZE: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
+pub trait DAT_SIZE: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
+pub trait DIS_SIZE: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
 
-pub type ArchReg = String;
+// TODO NOTE before 1.0, get a full no-std impl working for all of the crate
+// TODO FIXME better error type
+pub trait ArchReg: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
 
 pub enum ArgSymbol<T: PTR_SIZE, U: DAT_SIZE> {
     Unknown(String),
@@ -213,29 +220,118 @@ pub enum ArgSymbol<T: PTR_SIZE, U: DAT_SIZE> {
 }
 
 // TODO: Box all structs? NOTE-FIXME
-pub enum ArchArg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE> {
+pub enum ArchArg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg> {
     // limited to Unknown or Data
     Direct(ArgSymbol<T, U>),
     // limited to Unknown or Pointer
-    Memory(ArchMem<T, U>),
+    Memory(ArchMem<T, U, W>),
     // register
-    Register(ArchIndivReg<V>)
+    Register(ArchIndivReg<V, W>),
 }
 
-pub struct ArchMem<T: PTR_SIZE, U: DAT_SIZE> {
+pub struct ArchMem<T: PTR_SIZE, U: DAT_SIZE, W: ArchReg> {
     // segment register
-    pub segr: Option<ArchReg>,
+    pub segr: Option<Box<W>>,
     // actual memory value, must be Unknown or Pointer
-    pub v: ArgSymbol<T, U>
+    pub v: ArgSymbol<T, U>,
 }
 
-pub struct ArchIndivReg<V: DIS_SIZE> {
+pub struct ArchIndivReg<V: DIS_SIZE, W: ArchReg> {
     // segment register
-    pub segr: Option<ArchReg>,
+    pub segr: Option<Box<W>>,
     // offset; if register is dereferenced, Some(0)
     pub disp: Option<Box<V>>,
     // actual register
-    pub reg: ArchReg,
+    pub reg: Box<W>,
     // shift information - u8 is shift amount, in number of bits, and ArchReg is the register to be shifted
-    pub shift: Option<(u8, ArchReg)>
+    pub shift: Option<(u8, Box<W>)>,
+}
+
+// TODO: consider struct, boxed struct
+type RegClauseInfo<V: DIS_SIZE, W: ArchReg> = (Option<Box<V>>, Box<W>, Option<(u8, Box<W>)>);
+
+// TODO better error handling, Result instead of Option
+// TODO should this be an impl on ArchArg? makes a lot more sense
+pub fn parse_arg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg>(s: &String) -> Option<ArchArg<T, U, V, W>> {
+    // Detect the presence of a segment register
+    let cv: Vec<String> = s.split(":").map(|x| x.to_string()).collect();
+    if cv.len() != 1 {
+        if cv.len() == 2 {
+            let sr: Box<W> = Box::new(W::from_str(&cv[0]).unwrap());
+            if detect_mem_reg(&cv[1]) {
+                let vs: RegClauseInfo<V, W> = parse_reg_clause(&cv[1]);
+                return Some(ArchArg::Register(ArchIndivReg {
+                    segr: Some(sr),
+                    disp: vs.0,
+                    reg: vs.1,
+                    shift: vs.2
+                }));
+            } else {
+                return Some(ArchArg::Memory(ArchMem {
+                    segr: Some(sr),
+                    v: extract_mem_symbol(&cv[1])
+                }));
+            }
+        } else {
+            return None;
+        }
+    }
+    None
+}
+
+// TODO NOTE random thought: a lot of parsing and lexing can be multithreaded, maybe make an option to do that in the future
+// for very large files would see heavy acceleration
+// also, NOTE CFI support, whatever the hell it is
+
+fn parse_reg_clause<V: DIS_SIZE, W: ArchReg>(s: &String) -> RegClauseInfo<V, W> {
+    // First determine if there's an internal clause, there must be to even have a displacement
+    let mut disp: Option<Box<V>> = None;
+    let mut p: String = s.clone();
+    if p.contains('(') {
+        // item is claused, now split on the parentheses
+        let mut v: Vec<String> = p.split('(').map(|x| x.to_string()).collect();
+        p = v[1].trim_end_matches(')').to_string();
+        if v[0] != "" {
+            disp = Some(Box::new(V::from_str(&v[0]).unwrap()));
+        }
+    }
+    // predicate now has no parentheses
+    // TODO: helper method to take splits and not explicitly map?
+    // NOTE may be able to do &str directly here and in more NOTE places around the project
+    let secs: Vec<String> = p.split(',').map(|x| x.to_string()).collect();
+    // size guaranteed >= 1
+    let reg: Box<W> = Box::new(W::from_str(&secs[0]).unwrap());
+    let mut shift: Option<(u8, Box<W>)> = None;
+    if secs.len() >= 2 {
+        shift = Some((if secs.len() == 3 {secs[2].parse().unwrap()} else {0}, Box::new(W::from_str(&secs[1]).unwrap())));
+    }
+    (disp, reg, shift)
+}
+
+// true = reg, false = mem
+// TODO: consider changing receptive arguments from &String to &str NOTE cross-projecct
+fn detect_mem_reg(s: &String) -> bool {
+    // TODO: optimize these traversals
+    // TODO: minimize code dup
+    return s.chars().nth(0) == Some('%') || s.chars().nth(1) == Some('%');
+}
+
+fn extract_mem_symbol<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
+    let ns: String = trim_parentheses(s);
+    // NOTE bell technically requires that if the dollar sign is in parentheses, accept it as valid
+    // we ignore that for now, but it's a future consideration
+    // also, dollar with no parentheses is an error
+    // TODO in general, more illegal syntax catching
+
+    // + NOTE better error handling
+    if ns.chars().next().unwrap().is_numeric() {
+        return ArgSymbol::Pointer(Box::new(T::from_str(&ns).unwrap()));
+    } else {
+        return ArgSymbol::Unknown(ns);
+    }
+}
+
+// TODO NOTE utils function?
+fn trim_parentheses(s: &String) -> String {
+    s.trim_start_matches('(').trim_end_matches(')').to_string()
 }

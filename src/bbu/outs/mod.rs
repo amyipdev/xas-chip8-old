@@ -42,6 +42,9 @@ pub fn run_output(
 // NOTE: this is only for things which use automatic linking
 pub fn get_offset(p: &crate::platform::Platform) -> u64 {
     match (&p.arch, &p.target) {
-        (crate::platform::PlatformArch::ChipEightRaw, crate::platform::PlatformTarget::RawBinary) => 0x200,
+        (
+            crate::platform::PlatformArch::ChipEightRaw,
+            crate::platform::PlatformTarget::RawBinary,
+        ) => 0x200,
     }
 }

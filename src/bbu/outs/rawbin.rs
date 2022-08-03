@@ -24,7 +24,7 @@
 pub fn run_output(
     src: Vec<crate::lexer::LexSection>,
     dest: &mut Vec<u8>,
-    plat: &crate::platform::Platform
+    plat: &crate::platform::Platform,
 ) -> () {
     // TODO: unresolved symbols! while we build the label tree, we don't link them yet
     // TODO: dynamically size LabelTree entries... we want architecture pointer sizes

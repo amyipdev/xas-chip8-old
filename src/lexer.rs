@@ -93,7 +93,7 @@ impl LexOperation {
     pub fn extract_bytes(&self) -> Vec<u8> {
         match self {
             LexOperation::Instruction(a) => a.get_output_bytes(),
-            LexOperation::Macro(b) => b.get_output_bytes()
+            LexOperation::Macro(b) => b.get_output_bytes(),
         }
     }
 }
@@ -120,7 +120,7 @@ impl LexLabelType {
         // TODO: is this best?
         match self {
             LexLabelType::Base(ref a) => (a, None),
-            LexLabelType::Std(ref b) => (&b.ops, Some(&b.name))
+            LexLabelType::Std(ref b) => (&b.ops, Some(&b.name)),
         }
     }
 }
