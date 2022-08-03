@@ -25,6 +25,7 @@ build = false
 # is there any way it can be shrunk? at time of writing
 # release = 5.1M, debug = 15M
 regex = "1.6.0"
+num-traits = "0.2.15"
 
 [lib]
 name = "libxas"

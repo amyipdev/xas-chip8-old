@@ -21,6 +21,7 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
+extern crate num_traits;
 extern crate regex;
 
 pub mod bbu;

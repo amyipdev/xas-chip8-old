@@ -205,9 +205,120 @@ pub fn parse_argument<T>(p: &crate::platform::Platform, a: &String) -> Option<Ar
 // TODO: UpperCamelCase/PascalCase these trait names
 // TODO: Document all these types
 // TODO: NOTE clean definition duplication
-pub trait PTR_SIZE: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
-pub trait DAT_SIZE: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
-pub trait DIS_SIZE: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
+pub trait PTR_SIZE:
+    Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
+{
+}
+pub trait DAT_SIZE:
+    Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
+{
+}
+pub trait DIS_SIZE:
+    Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
+{
+}
+
+// NOTE NOTE NOTE
+//
+// This next section of code is currently sample types for PTR_SIZE, DAT_SIZE, etc
+// These likely should be moved to some form of dedicated section
+
+// TODO NOTE extremely utility
+pub trait Integral:
+    num_traits::WrappingNeg + num_traits::NumAssign + num_traits::cast::FromPrimitive + Copy + Clone
+{
+}
+impl<T> Integral for T where
+    T: num_traits::WrappingNeg
+        + num_traits::NumAssign
+        + num_traits::cast::FromPrimitive
+        + Copy
+        + Clone
+{
+}
+
+#[derive(Copy, Clone)]
+pub struct GenScal<T: Integral> {
+    pub i: T,
+}
+
+impl<T: Integral> std::str::FromStr for GenScal<T> {
+    type Err = std::num::ParseIntError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self {
+            i: parse_ukr::<T>(s).unwrap(),
+        })
+    }
+}
+
+impl<T: Integral> PTR_SIZE for GenScal<T> {}
+impl<T: Integral> DAT_SIZE for GenScal<T> {}
+impl<T: Integral> DIS_SIZE for GenScal<T> {}
+
+// TODO: macro for these odd-ball types
+#[derive(Copy, Clone)]
+pub struct Gen12 {
+    pub i: u16,
+}
+
+impl std::str::FromStr for Gen12 {
+    type Err = std::num::ParseIntError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self {
+            i: parse_ukr::<u16>(s).unwrap() & 0xfff,
+        })
+    }
+}
+
+impl PTR_SIZE for Gen12 {}
+impl DAT_SIZE for Gen12 {}
+impl DIS_SIZE for Gen12 {}
+
+//pub struct Dat12
+
+// NOTE another utility suite
+// Unwrapping aid
+fn uw_aid<T, E>(r: Result<T, E>) -> T {
+    match r {
+        Ok(a) => a,
+        Err(_) => panic!("unwrapping failed"),
+    }
+}
+
+// NOTE: definitely a utility function, TODO
+// TODO FIXME better error handling
+fn parse_ukr<T: Integral>(s: &str) -> Option<T> {
+    // TODO: optimize, this is horribly inefficient to have to recollect the iterator
+    /*
+    let mut i = s.chars().peekable();
+    let sign = if i.peek() == Some(&'-') {i.next(); true} else {false};
+    let col: String = i.collect();
+    let r: &str = &*col;
+     */
+    // End immediately on empty strings
+    if s.len() == 0 {
+        return None;
+    }
+    let sign = if s.chars().next() == Some('-') { 1 } else { 0 };
+    let mut v: T = T::from_usize(0).unwrap();
+    // TODO typehint
+    let sl = &s[sign..];
+    // Slices are valid still one over, and since the length is >=1, starting at 1 is fine
+    // TODO minimize code dup
+    if sl.starts_with("0x") {
+        v = uw_aid(T::from_str_radix(&sl[2..], 16));
+    } else if sl.starts_with("0b") {
+        v = uw_aid(T::from_str_radix(&sl[2..], 2));
+    } else if sl.starts_with("0d") {
+        v = uw_aid(T::from_str_radix(&sl[2..], 12));
+    } else if sl.starts_with("0") {
+        v = uw_aid(T::from_str_radix(&sl[1..], 8));
+    } else {
+        // NOTE is _radix really necessary here?
+        v = uw_aid(T::from_str_radix(sl, 10));
+    }
+    Some(if sign == 1 { v.wrapping_neg() } else { v })
+}
 
 // TODO NOTE before 1.0, get a full no-std impl working for all of the crate
 // TODO FIXME better error type
@@ -252,31 +363,66 @@ type RegClauseInfo<V: DIS_SIZE, W: ArchReg> = (Option<Box<V>>, Box<W>, Option<(u
 
 // TODO better error handling, Result instead of Option
 // TODO should this be an impl on ArchArg? makes a lot more sense
-pub fn parse_arg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg>(s: &String) -> Option<ArchArg<T, U, V, W>> {
+// TODO FIXME return here and do major cleanup
+// TODO FIXME FIXME FIXME FIXME this should be a FromStr off ArchArg once error handling is correct
+pub fn parse_arg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg>(
+    s: &String,
+) -> Option<ArchArg<T, U, V, W>> {
     // Detect the presence of a segment register
     let cv: Vec<String> = s.split(":").map(|x| x.to_string()).collect();
     if cv.len() != 1 {
         if cv.len() == 2 {
             let sr: Box<W> = Box::new(W::from_str(&cv[0]).unwrap());
-            if detect_mem_reg(&cv[1]) {
+            if cv[1].contains('%') {
                 let vs: RegClauseInfo<V, W> = parse_reg_clause(&cv[1]);
                 return Some(ArchArg::Register(ArchIndivReg {
                     segr: Some(sr),
                     disp: vs.0,
                     reg: vs.1,
-                    shift: vs.2
+                    shift: vs.2,
                 }));
             } else {
                 return Some(ArchArg::Memory(ArchMem {
                     segr: Some(sr),
-                    v: extract_mem_symbol(&cv[1])
+                    v: extract_mem_symbol(&cv[1]),
                 }));
             }
         } else {
             return None;
         }
     }
-    None
+    // cv length must be 1
+    if cv[0].contains('%') {
+        // register time
+        // NOTE NOTE NOTE NOTE TODO: there's a lot of code duplication here that needs to be cleaned up
+        let vs: RegClauseInfo<V, W> = parse_reg_clause(&cv[0]);
+        return Some(ArchArg::Register(ArchIndivReg {
+            segr: None,
+            disp: vs.0,
+            reg: vs.1,
+            shift: vs.2,
+        }));
+    } else {
+        if cv[0].chars().next() == Some('$') {
+            return Some(ArchArg::Direct(get_direct_value(
+                &cv[0].split_at(1).1.to_string(),
+            )));
+        } else {
+            return Some(ArchArg::Memory(ArchMem {
+                segr: None,
+                v: extract_mem_symbol(&cv[1]),
+            }));
+        }
+    }
+}
+
+fn get_direct_value<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
+    // presume string already has `$` stripped
+    if s.chars().all(char::is_numeric) {
+        return ArgSymbol::Data(Box::new(U::from_str(s).unwrap()));
+    } else {
+        return ArgSymbol::Unknown(s.clone());
+    }
 }
 
 // TODO NOTE random thought: a lot of parsing and lexing can be multithreaded, maybe make an option to do that in the future
@@ -303,11 +449,19 @@ fn parse_reg_clause<V: DIS_SIZE, W: ArchReg>(s: &String) -> RegClauseInfo<V, W> 
     let reg: Box<W> = Box::new(W::from_str(&secs[0]).unwrap());
     let mut shift: Option<(u8, Box<W>)> = None;
     if secs.len() >= 2 {
-        shift = Some((if secs.len() == 3 {secs[2].parse().unwrap()} else {0}, Box::new(W::from_str(&secs[1]).unwrap())));
+        shift = Some((
+            if secs.len() == 3 {
+                secs[2].parse().unwrap()
+            } else {
+                0
+            },
+            Box::new(W::from_str(&secs[1]).unwrap()),
+        ));
     }
     (disp, reg, shift)
 }
 
+/*
 // true = reg, false = mem
 // TODO: consider changing receptive arguments from &String to &str NOTE cross-projecct
 fn detect_mem_reg(s: &String) -> bool {
@@ -315,6 +469,7 @@ fn detect_mem_reg(s: &String) -> bool {
     // TODO: minimize code dup
     return s.chars().nth(0) == Some('%') || s.chars().nth(1) == Some('%');
 }
+*/
 
 fn extract_mem_symbol<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
     let ns: String = trim_parentheses(s);

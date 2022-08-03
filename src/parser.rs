@@ -217,7 +217,9 @@ impl Iterator for ArgCommaSplitter<'_> {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let None = self.c.peek() {return None;}
+        if let None = self.c.peek() {
+            return None;
+        }
         let mut pool: Vec<u8> = Vec::new();
         loop {
             // based on there being absolutely no nested parentheses
@@ -225,8 +227,14 @@ impl Iterator for ArgCommaSplitter<'_> {
             match self.c.next() {
                 // is match actually the best choice here due to code dup?
                 // NOTE TODO code dup
-                Some(b'(') => {self.p = true; pool.push(b'(');},
-                Some(b')') => {self.p = false; pool.push(b')');},
+                Some(b'(') => {
+                    self.p = true;
+                    pool.push(b'(');
+                }
+                Some(b')') => {
+                    self.p = false;
+                    pool.push(b')');
+                }
                 Some(b',') => {
                     if !self.p {
                         return Some(String::from_utf8(pool).unwrap());
