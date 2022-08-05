@@ -297,7 +297,7 @@ impl Lexer {
             // TODO: move this responsibility over to BBU global thanks to ArchArg
             let op: LexOperation = match self.p.arch {
                 crate::platform::PlatformArch::ChipEightRaw => {
-                    LexOperation::Instruction(Box::new(crate::bbu::chip8_raw::get_instruction(i)))
+                    LexOperation::Instruction(crate::bbu::chip8_raw::get_instruction(i))
                 }
                 _ => panic!("architecture not implemented yet"),
             };

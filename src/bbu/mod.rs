@@ -330,6 +330,32 @@ pub enum ArgSymbol<T: PTR_SIZE, U: DAT_SIZE> {
     Data(Box<U>),
 }
 
+impl<T: PTR_SIZE, U: DAT_SIZE> ArgSymbol<T, U> {
+    pub fn unwrap_unknown(&self) -> Option<&String> {
+        if let ArgSymbol::Unknown(n) = self {
+            return Some(n);
+        } else {
+            return None;
+        }
+    }
+
+    pub fn unwrap_ptr(&self) -> Option<&Box<T>> {
+        if let ArgSymbol::Pointer(n) = self {
+            return Some(n);
+        } else {
+            return None;
+        }
+    }
+
+    pub fn unwrap_data(&self) -> Option<&Box<U>> {
+        if let ArgSymbol::Data(n) = self {
+            return Some(n);
+        } else {
+            return None;
+        }
+    }
+}
+
 // TODO: Box all structs? NOTE-FIXME
 pub enum ArchArg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg> {
     // limited to Unknown or Data
@@ -338,6 +364,32 @@ pub enum ArchArg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg> {
     Memory(ArchMem<T, U, W>),
     // register
     Register(ArchIndivReg<V, W>),
+}
+
+impl<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg> ArchArg<T, U, V, W> {
+    pub fn unwrap_direct(&self) -> Option<&ArgSymbol<T, U>> {
+        if let ArchArg::Direct(n) = self {
+            return Some(n);
+        } else {
+            return None;
+        }
+    }
+
+    pub fn unwrap_memory(&self) -> Option<&ArchMem<T, U, W>> {
+        if let ArchArg::Memory(n) = self {
+            return Some(n);
+        } else {
+            return None;
+        }
+    }
+
+    pub fn unwrap_register(&self) -> Option<&ArchIndivReg<V, W>> {
+        if let ArchArg::Register(n) = self {
+            return Some(n);
+        } else {
+            return None;
+        }
+    }
 }
 
 pub struct ArchMem<T: PTR_SIZE, U: DAT_SIZE, W: ArchReg> {
@@ -410,7 +462,7 @@ pub fn parse_arg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg>(
         } else {
             return Some(ArchArg::Memory(ArchMem {
                 segr: None,
-                v: extract_mem_symbol(&cv[1]),
+                v: extract_mem_symbol(&cv[0]),
             }));
         }
     }
@@ -418,7 +470,9 @@ pub fn parse_arg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg>(
 
 fn get_direct_value<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
     // presume string already has `$` stripped
-    if s.chars().all(char::is_numeric) {
+    // TODO: octal support with 0o
+    // TODO: check for full dozenal support
+    if s.chars().all(|x| (x.is_numeric() || "-xbd".contains(x))) {
         return ArgSymbol::Data(Box::new(U::from_str(s).unwrap()));
     } else {
         return ArgSymbol::Unknown(s.clone());
@@ -479,7 +533,8 @@ fn extract_mem_symbol<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
     // TODO in general, more illegal syntax catching
 
     // + NOTE better error handling
-    if ns.chars().next().unwrap().is_numeric() {
+    // NOTE TODO don't run double, also should it be .any(|x|)?
+    if ns.chars().next().unwrap().is_numeric() || ns.chars().next().unwrap() == '-' {
         return ArgSymbol::Pointer(Box::new(T::from_str(&ns).unwrap()));
     } else {
         return ArgSymbol::Unknown(ns);

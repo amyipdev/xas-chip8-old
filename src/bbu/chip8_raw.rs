@@ -36,9 +36,50 @@ pub type CHIP8_DAT_SIZE = crate::bbu::GenScal<u8>;
 pub type CHIP8_DIS_SIZE = crate::bbu::GenScal<u8>;
 pub type CHIP8_PTR_SIZE = crate::bbu::Gen12;
 
-pub fn get_instruction(i: crate::parser::ParsedInstruction) -> impl crate::bbu::ArchInstruction {
-    match i.instr.as_str() {
-        "0NNN" | "0nnn" => Chip8_0NNN::get_lex(i.args),
+macro_rules! gim {
+    ($n:ident,$i:ident) => {{
+        Box::new($n::get_lex($i.args))
+    }};
+}
+
+pub fn get_instruction(i: crate::parser::ParsedInstruction) -> Box<dyn ArchInstruction> {
+    match i.instr.to_lowercase().as_str() {
+        // TODO: reduce code dup, tie into the macros beforehand??
+        "0nnn" => gim!(Chip8_0NNN, i),
+        "00e0" => gim!(Chip8_00E0, i),
+        "00ee" => gim!(Chip8_00EE, i),
+        "1nnn" => gim!(Chip8_1NNN, i),
+        "2nnn" => gim!(Chip8_2NNN, i),
+        "3xnn" => gim!(Chip8_3XNN, i),
+        "4xnn" => gim!(Chip8_4XNN, i),
+        "5xy0" => gim!(Chip8_5XY0, i),
+        "6xnn" => gim!(Chip8_6XNN, i),
+        "7nnn" => gim!(Chip8_7XNN, i),
+        "8xy0" => gim!(Chip8_8XY0, i),
+        "8xy1" => gim!(Chip8_8XY1, i),
+        "8xy2" => gim!(Chip8_8XY2, i),
+        "8xy3" => gim!(Chip8_8XY3, i),
+        "8xy4" => gim!(Chip8_8XY4, i),
+        "8xy5" => gim!(Chip8_8XY5, i),
+        "8xy6" => gim!(Chip8_8XY6, i),
+        "8xy7" => gim!(Chip8_8XY7, i),
+        "8xye" => gim!(Chip8_8XYE, i),
+        "9xy0" => gim!(Chip8_9XY0, i),
+        "annn" => gim!(Chip8_ANNN, i),
+        "bnnn" => gim!(Chip8_BNNN, i),
+        "cnnn" => gim!(Chip8_CXNN, i),
+        "dxyn" => gim!(Chip8_DXYN, i),
+        "ex9e" => gim!(Chip8_EX9E, i),
+        "exa1" => gim!(Chip8_EXA1, i),
+        "fx07" => gim!(Chip8_FX07, i),
+        "fx0a" => gim!(Chip8_FX0A, i),
+        "fx15" => gim!(Chip8_FX15, i),
+        "fx18" => gim!(Chip8_FX18, i),
+        "fx1e" => gim!(Chip8_FX1E, i),
+        "fx29" => gim!(Chip8_FX29, i),
+        "fx33" => gim!(Chip8_FX33, i),
+        "fx55" => gim!(Chip8_FX55, i),
+        "fx65" => gim!(Chip8_FX65, i),
         _ => panic!("unknown instruction error"),
     }
 }
@@ -63,7 +104,7 @@ impl FromStr for CHIP8_ArchReg {
                     } else {
                         a
                     },
-                    10,
+                    16,
                 )
                 .unwrap() as u8,
             })
@@ -73,61 +114,248 @@ impl FromStr for CHIP8_ArchReg {
 
 impl crate::bbu::ArchReg for CHIP8_ArchReg {}
 
-// chip8 "call" function
-pub struct Chip8_0NNN {
-    addr: CHIP8_PTR_SIZE,
+pub type CHIP8_Arg =
+    crate::bbu::ArchArg<CHIP8_PTR_SIZE, CHIP8_DAT_SIZE, CHIP8_DIS_SIZE, CHIP8_ArchReg>;
+
+// lots of code duplication with get_output_bytes TODO FIXME NOTE, somen with get_lex
+
+macro_rules! make_std_const {
+    ($nm:ident,$offs:expr) => {
+        pub struct $nm {}
+        impl ArchInstruction for $nm {
+            fn get_output_bytes(&self) -> Vec<u8> {
+                Vec::from($offs.to_be_bytes())
+            }
+            fn get_lex(a: Option<Vec<String>>) -> Self {
+                Self {}
+            }
+        }
+    };
 }
 
-// TODO: better logging/errors (file name, line number, proper messages, etc)
-impl crate::bbu::ArchInstruction for Chip8_0NNN {
-    fn get_output_bytes(&self) -> Vec<u8> {
-        vec![
-            ((self.addr.i & 0xF00) >> 8) as u8,
-            (self.addr.i & 0xFF) as u8,
-        ]
-    }
-    // TODO: fix all this
-    fn get_lex(a: Option<Vec<String>>) -> Self {
-        if let Some(ref i) = a {
-            if i.len() != 1 {
-                panic!("chip8_raw: improper number of arguments")
+macro_rules! make_std_nnn {
+    ($nm:ident,$offs:expr) => {
+        pub struct $nm {
+            addr: CHIP8_PTR_SIZE,
+        }
+        impl ArchInstruction for $nm {
+            fn get_output_bytes(&self) -> Vec<u8> {
+                Vec::from(($offs | self.addr.i).to_be_bytes())
             }
-            let b: crate::bbu::ArchArg<
-                CHIP8_PTR_SIZE,
-                CHIP8_DAT_SIZE,
-                CHIP8_DIS_SIZE,
-                CHIP8_ArchReg,
-            > = crate::bbu::parse_arg(&a.unwrap()[0]).unwrap();
-            if let crate::bbu::ArchArg::Memory(c) = b {
-                if let crate::bbu::ArgSymbol::Pointer(d) = c.v {
-                    Chip8_0NNN { addr: *d }
-                } else {
-                    panic!("no dynamic symbol support on chip8 yet")
+            fn get_lex(a: Option<Vec<String>>) -> Self {
+                Self { addr: get_nnn(a) }
+            }
+        }
+    };
+}
+
+// TODO: do they need to be pub?
+// TODO: make this accept multiple and do them all
+// TODO: evaluate whether all as's are necessary
+// TODO: would it be more space-efficient to split the formation
+//       and vec creation instructions into a function, so there's
+//       only one copy of it in the code?
+// NOTE: optimize
+macro_rules! make_std_xnn {
+    ($nm:ident,$offs:expr) => {
+        pub struct $nm {
+            x: CHIP8_ArchReg,
+            d: CHIP8_DAT_SIZE,
+        }
+        impl ArchInstruction for $nm {
+            fn get_output_bytes(&self) -> Vec<u8> {
+                Vec::from(($offs | ((self.x.n as u16) << 8) | (self.d.i as u16)).to_be_bytes())
+            }
+            fn get_lex(a: Option<Vec<String>>) -> Self {
+                let b: (CHIP8_ArchReg, CHIP8_DAT_SIZE) = get_xnn(a);
+                Self { x: b.0, d: b.1 }
+            }
+        }
+    };
+}
+
+// TODO: general for archinstruction, is vec best? could boxed slice work better?
+macro_rules! make_std_xy {
+    ($nm:ident,$offs:expr) => {
+        pub struct $nm {
+            s: CHIP8_ArchReg,
+            d: CHIP8_ArchReg,
+        }
+        impl ArchInstruction for $nm {
+            fn get_output_bytes(&self) -> Vec<u8> {
+                Vec::from(
+                    ($offs | ((self.d.n as u16) << 8) | ((self.s.n as u16) << 4)).to_be_bytes(),
+                )
+            }
+            fn get_lex(a: Option<Vec<String>>) -> Self {
+                let b: (CHIP8_ArchReg, CHIP8_ArchReg) = get_xy(a);
+                Self { s: b.0, d: b.1 }
+            }
+        }
+    };
+}
+
+// TODO: create type names for each arg combo type to make tuples easier
+// XYN = $N,%vX,%vY
+macro_rules! make_std_xyn {
+    ($nm:ident,$offs:expr) => {
+        pub struct $nm {
+            n: CHIP8_DAT_SIZE,
+            x: CHIP8_ArchReg,
+            y: CHIP8_ArchReg,
+        }
+        impl ArchInstruction for $nm {
+            fn get_output_bytes(&self) -> Vec<u8> {
+                Vec::from(
+                    ($offs
+                        | ((self.x.n as u16) << 8)
+                        | ((self.y.n as u16) << 4)
+                        | ((self.n.i as u16) & 0xf))
+                        .to_be_bytes(),
+                )
+            }
+            fn get_lex(a: Option<Vec<String>>) -> Self {
+                let b: (CHIP8_DAT_SIZE, CHIP8_ArchReg, CHIP8_ArchReg) = get_xyn(a);
+                Self {
+                    n: b.0,
+                    x: b.1,
+                    y: b.2,
                 }
-            } else {
-                panic!("wrong operand type")
             }
-        } else {
-            panic!("chip8_raw: not enough arguments")
         }
-        /*
-        // TODO: better number checking, this is proof-of-concept
-        if let Some(i) = a {
-            if i.len() != 1 {
-                panic!("Improper number of arguments")
-            }
-            // TODO: proper error handling if number is out of sizescope
-            let v: u16 = crate::bbu::parse_unknown_radix_u16(&i[0]).unwrap();
-            // instruction is only valid when >0x200, <0x1000
-            if v < 0x200 || v > 0xfff {
-                panic!("Call out of range")
-            }
-            Chip8_0NNN {
-                args: (((v & 0xf00) >> 8) as u8, v as u8 & 0xff),
-            }
-        } else {
-            panic!("No arguments provided, error")
+    };
+}
+
+// named efx because all efx instructions start with 0xE or 0xF
+// NOTE wish I had a macro for making these macros
+macro_rules! make_std_efx {
+    ($nm:ident,$offs:expr) => {
+        pub struct $nm {
+            x: CHIP8_ArchReg
         }
-        */
+        impl ArchInstruction for $nm {
+            fn get_output_bytes(&self) -> Vec<u8> {
+                Vec::from(($offs | ((self.x.n as u16) << 8)).to_be_bytes())
+            }
+            fn get_lex(a: Option<Vec<String>>) -> Self {
+                Self {x: get_efx(a)}
+            }
+        }
     }
 }
+
+make_std_nnn!(Chip8_0NNN, 0u16);
+make_std_const!(Chip8_00E0, 0xe0u16);
+make_std_const!(Chip8_00EE, 0xeeu16);
+make_std_nnn!(Chip8_1NNN, 0x1000u16);
+make_std_nnn!(Chip8_2NNN, 0x2000u16);
+make_std_xnn!(Chip8_3XNN, 0x3000u16);
+make_std_xnn!(Chip8_4XNN, 0x4000u16);
+make_std_xnn!(Chip8_5XY0, 0x5000u16);
+make_std_xnn!(Chip8_6XNN, 0x6000u16);
+make_std_xnn!(Chip8_7XNN, 0x7000u16);
+make_std_xy!(Chip8_8XY0, 0x8000u16);
+make_std_xy!(Chip8_8XY1, 0x8001u16);
+make_std_xy!(Chip8_8XY2, 0x8002u16);
+make_std_xy!(Chip8_8XY3, 0x8003u16);
+make_std_xy!(Chip8_8XY4, 0x8004u16);
+make_std_xy!(Chip8_8XY5, 0x8005u16);
+make_std_xy!(Chip8_8XY6, 0x8006u16);
+make_std_xy!(Chip8_8XY7, 0x8007u16);
+make_std_xy!(Chip8_8XYE, 0x800eu16);
+make_std_xy!(Chip8_9XY0, 0x9000u16);
+make_std_nnn!(Chip8_ANNN, 0xa000u16);
+make_std_nnn!(Chip8_BNNN, 0xb000u16);
+make_std_xnn!(Chip8_CXNN, 0xc000u16);
+make_std_xyn!(Chip8_DXYN, 0xd000u16);
+make_std_efx!(Chip8_EX9E, 0xe09eu16);
+make_std_efx!(Chip8_EXA1, 0xe0a1u16);
+make_std_efx!(Chip8_FX07, 0xf007u16);
+make_std_efx!(Chip8_FX0A, 0xf00au16);
+make_std_efx!(Chip8_FX15, 0xf015u16);
+make_std_efx!(Chip8_FX18, 0xf018u16);
+make_std_efx!(Chip8_FX1E, 0xf01eu16);
+make_std_efx!(Chip8_FX29, 0xf029u16);
+make_std_efx!(Chip8_FX33, 0xf033u16);
+make_std_efx!(Chip8_FX55, 0xf055u16);
+make_std_efx!(Chip8_FX65, 0xf065u16);
+
+// TODO condense similarly to get_xnn
+fn get_nnn(a: Option<Vec<String>>) -> CHIP8_PTR_SIZE {
+    if let Some(ref i) = a {
+        if i.len() != 1 {
+            panic!("c8r: wrong arg count")
+        }
+        let b: CHIP8_Arg = crate::bbu::parse_arg(&a.unwrap()[0]).unwrap();
+        **b.unwrap_memory().unwrap().v.unwrap_ptr().unwrap()
+    } else {
+        panic!("c8r: not enough args")
+    }
+}
+
+// this logic structure is repeated a lot
+// TODO consider condensing it somehow
+fn get_xnn(a: Option<Vec<String>>) -> (CHIP8_ArchReg, CHIP8_DAT_SIZE) {
+    if let Some(ref i) = a {
+        if i.len() != 2 {
+            panic!("c8r: not enough args")
+        }
+        // data
+        let b: CHIP8_Arg = crate::bbu::parse_arg(&a.as_ref().unwrap()[0]).unwrap();
+        // register X
+        let c: CHIP8_Arg = crate::bbu::parse_arg(&a.as_ref().unwrap()[1]).unwrap();
+        (
+            *c.unwrap_register().unwrap().reg,
+            **b.unwrap_direct().unwrap().unwrap_data().unwrap(),
+        )
+    } else {
+        panic!("c8r: not enough args")
+    }
+}
+
+fn get_xy(a: Option<Vec<String>>) -> (CHIP8_ArchReg, CHIP8_ArchReg) {
+    //if let Some(ref i) = a {
+    //    if i.len() != 2 {
+    //        panic!("c8r: not enough args")
+    //    }
+    let b: Vec<CHIP8_Arg> = argcheck(&a, 2);
+    (
+        *b[0].unwrap_register().unwrap().reg,
+        *b[1].unwrap_register().unwrap().reg,
+    )
+    //} else {
+    //    panic!("c8r: not enough args")
+    //}
+}
+
+// res.0 limited to 4 bits
+fn get_xyn(a: Option<Vec<String>>) -> (CHIP8_DAT_SIZE, CHIP8_ArchReg, CHIP8_ArchReg) {
+    let b: Vec<CHIP8_Arg> = argcheck(&a, 3);
+    (
+        **b[0].unwrap_direct().unwrap().unwrap_data().unwrap(),
+        *b[1].unwrap_register().unwrap().reg,
+        *b[2].unwrap_register().unwrap().reg,
+    )
+}
+
+fn get_efx(a: Option<Vec<String>>) -> CHIP8_ArchReg {
+    let b: Vec<CHIP8_Arg> = argcheck(&a, 1);
+    *b[0].unwrap_register().unwrap().reg
+}
+
+// TODO: make this a utility public function
+// TODO: better error handling (log)
+// TODO: dedup panic message
+fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<CHIP8_Arg> {
+    if let Some(ref b) = a {
+        if b.len() != i {
+            panic!("argument check failed")
+        } else {
+            Vec::from_iter(b.into_iter().map(|x| crate::bbu::parse_arg(&x).unwrap()))
+        }
+    } else {
+        panic!("argument check failed")
+    }
+}
+
+// TODO FIXME NOTE: throw warnings when number is truncated!
