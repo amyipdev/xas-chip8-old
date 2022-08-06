@@ -21,6 +21,8 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
+// TODO: Code organization and cleanup
+
 use std::str::FromStr;
 
 // TODO: make all arches (including chip8_raw) under features
@@ -29,6 +31,11 @@ use std::str::FromStr;
 // TODO: better error handling
 // TODO: reduce repetition of this
 use crate::bbu::ArchInstruction;
+// TODO: push the shortening out throughout the file
+// TODO: and same with this:
+use crate::bbu::SymConv;
+use crate::bbu::DAT_SIZE;
+use crate::bbu::PTR_SIZE;
 
 pub type CHIP8_DAT_SIZE = crate::bbu::GenScal<u8>;
 // TODO: generic displacement size for types without one
@@ -36,13 +43,59 @@ pub type CHIP8_DAT_SIZE = crate::bbu::GenScal<u8>;
 pub type CHIP8_DIS_SIZE = crate::bbu::GenScal<u8>;
 pub type CHIP8_PTR_SIZE = crate::bbu::Gen12;
 
+pub type CHIP8_SymAlias = crate::bbu::ArgSymbol<CHIP8_PTR_SIZE, CHIP8_DAT_SIZE>;
+
+//pub type CHIP8_Symbol = crate::bbu::ArgSymbol<CHIP8_PTR_SIZE, CHIP8_DAT_SIZE>;
+pub struct CHIP8_Symbol {
+    pub i: CHIP8_SymAlias,
+}
+
+// TODO: make this, other parts of ArgSymbol construction a macro
+impl crate::bbu::SymConv for CHIP8_Symbol {
+    // FIXME FIXME FIXME: into_ptr, into_dat
+    fn from_ptr<T: crate::bbu::PTR_SIZE>(a: T) -> Self {
+        Self {
+            i: crate::bbu::ArgSymbol::Pointer(Box::new(<CHIP8_PTR_SIZE as PTR_SIZE>::from_int::<
+                u16,
+            >(a.extract_int::<u16>()))),
+        }
+    }
+    fn from_dat<T: crate::bbu::DAT_SIZE>(a: T) -> Self {
+        Self {
+            i: crate::bbu::ArgSymbol::Data(Box::new(<CHIP8_DAT_SIZE as DAT_SIZE>::from_int::<u8>(
+                a.extract_int::<u8>(),
+            ))),
+        }
+    }
+    fn into_ptr<T: crate::bbu::PTR_SIZE, E: crate::bbu::Integral>(&self) -> T {
+        T::from_int(crate::bbu::PTR_SIZE::extract_int::<E>(
+            &**self.i.unwrap_ptr().unwrap(),
+        ))
+    }
+}
+
+impl<T: crate::bbu::SymConv> crate::bbu::ArchSym<T> for CHIP8_Symbol {
+    fn get_uk_sym(&self) -> Option<&String> {
+        match &self.i {
+            crate::bbu::ArgSymbol::UnknownPointer(i) => Some(i),
+            crate::bbu::ArgSymbol::UnknownData(i) => Some(i),
+            _ => None,
+        }
+    }
+    fn set_sym(&mut self, a: T) -> () {
+        unimplemented!()
+    }
+}
+
 macro_rules! gim {
     ($n:ident,$i:ident) => {{
-        Box::new($n::get_lex($i.args))
+        Box::new(<$n as ArchInstruction<CHIP8_Symbol>>::get_lex($i.args))
     }};
 }
 
-pub fn get_instruction(i: crate::parser::ParsedInstruction) -> Box<dyn ArchInstruction> {
+pub fn get_instruction<T: crate::bbu::SymConv>(
+    i: crate::parser::ParsedInstruction,
+) -> Box<dyn ArchInstruction<T>> {
     match i.instr.to_lowercase().as_str() {
         // TODO: reduce code dup, tie into the macros beforehand??
         "0nnn" => gim!(Chip8_0NNN, i),
@@ -117,18 +170,33 @@ impl crate::bbu::ArchReg for CHIP8_ArchReg {}
 pub type CHIP8_Arg =
     crate::bbu::ArchArg<CHIP8_PTR_SIZE, CHIP8_DAT_SIZE, CHIP8_DIS_SIZE, CHIP8_ArchReg>;
 
+// TODO: is vec![] best here?
+fn chip8_placeholder() -> Vec<u8> {
+    vec![0u8, 0u8]
+}
+
 // lots of code duplication with get_output_bytes TODO FIXME NOTE, somen with get_lex
 
 macro_rules! make_std_const {
     ($nm:ident,$offs:expr) => {
         pub struct $nm {}
-        impl ArchInstruction for $nm {
+        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from($offs.to_be_bytes())
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 Self {}
             }
+            fn check_symbols(&self) -> bool {
+                false
+            }
+            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+                None
+            }
+            fn get_placeholder(&self) -> Vec<u8> {
+                chip8_placeholder()
+            }
+            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {}
         }
     };
 }
@@ -136,14 +204,39 @@ macro_rules! make_std_const {
 macro_rules! make_std_nnn {
     ($nm:ident,$offs:expr) => {
         pub struct $nm {
-            addr: CHIP8_PTR_SIZE,
+            addr: CHIP8_SymAlias,
         }
-        impl ArchInstruction for $nm {
+        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
-                Vec::from(($offs | self.addr.i).to_be_bytes())
+                Vec::from(($offs | self.addr.unwrap_ptr().unwrap().i).to_be_bytes())
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 Self { addr: get_nnn(a) }
+            }
+            fn check_symbols(&self) -> bool {
+                match self.addr {
+                    crate::bbu::ArgSymbol::UnknownPointer(_) => true,
+                    _ => false,
+                }
+            }
+            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+                match self.addr {
+                    crate::bbu::ArgSymbol::UnknownPointer(ref a) => Some(vec![(a, 0)]),
+                    _ => None,
+                }
+            }
+            fn get_placeholder(&self) -> Vec<u8> {
+                chip8_placeholder()
+            }
+            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {
+                match p {
+                    0 => {
+                        self.addr = crate::bbu::ArgSymbol::Pointer(Box::new(
+                            s.into_ptr::<CHIP8_PTR_SIZE, u16>(),
+                        ))
+                    }
+                    _ => panic!("c8r: unknown positional"),
+                }
             }
         }
     };
@@ -162,13 +255,25 @@ macro_rules! make_std_xnn {
             x: CHIP8_ArchReg,
             d: CHIP8_DAT_SIZE,
         }
-        impl ArchInstruction for $nm {
+        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from(($offs | ((self.x.n as u16) << 8) | (self.d.i as u16)).to_be_bytes())
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 let b: (CHIP8_ArchReg, CHIP8_DAT_SIZE) = get_xnn(a);
                 Self { x: b.0, d: b.1 }
+            }
+            fn check_symbols(&self) -> bool {
+                unimplemented!()
+            }
+            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+                unimplemented!()
+            }
+            fn get_placeholder(&self) -> Vec<u8> {
+                chip8_placeholder()
+            }
+            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {
+                unimplemented!()
             }
         }
     };
@@ -181,7 +286,7 @@ macro_rules! make_std_xy {
             s: CHIP8_ArchReg,
             d: CHIP8_ArchReg,
         }
-        impl ArchInstruction for $nm {
+        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from(
                     ($offs | ((self.d.n as u16) << 8) | ((self.s.n as u16) << 4)).to_be_bytes(),
@@ -190,6 +295,18 @@ macro_rules! make_std_xy {
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 let b: (CHIP8_ArchReg, CHIP8_ArchReg) = get_xy(a);
                 Self { s: b.0, d: b.1 }
+            }
+            fn check_symbols(&self) -> bool {
+                unimplemented!()
+            }
+            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+                unimplemented!()
+            }
+            fn get_placeholder(&self) -> Vec<u8> {
+                chip8_placeholder()
+            }
+            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {
+                unimplemented!()
             }
         }
     };
@@ -204,7 +321,7 @@ macro_rules! make_std_xyn {
             x: CHIP8_ArchReg,
             y: CHIP8_ArchReg,
         }
-        impl ArchInstruction for $nm {
+        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from(
                     ($offs
@@ -222,6 +339,18 @@ macro_rules! make_std_xyn {
                     y: b.2,
                 }
             }
+            fn check_symbols(&self) -> bool {
+                unimplemented!()
+            }
+            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+                unimplemented!()
+            }
+            fn get_placeholder(&self) -> Vec<u8> {
+                chip8_placeholder()
+            }
+            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {
+                unimplemented!()
+            }
         }
     };
 }
@@ -231,17 +360,29 @@ macro_rules! make_std_xyn {
 macro_rules! make_std_efx {
     ($nm:ident,$offs:expr) => {
         pub struct $nm {
-            x: CHIP8_ArchReg
+            x: CHIP8_ArchReg,
         }
-        impl ArchInstruction for $nm {
+        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from(($offs | ((self.x.n as u16) << 8)).to_be_bytes())
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
-                Self {x: get_efx(a)}
+                Self { x: get_efx(a) }
+            }
+            fn check_symbols(&self) -> bool {
+                unimplemented!()
+            }
+            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+                unimplemented!()
+            }
+            fn get_placeholder(&self) -> Vec<u8> {
+                chip8_placeholder()
+            }
+            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {
+                unimplemented!()
             }
         }
-    }
+    };
 }
 
 make_std_nnn!(Chip8_0NNN, 0u16);
@@ -281,13 +422,14 @@ make_std_efx!(Chip8_FX55, 0xf055u16);
 make_std_efx!(Chip8_FX65, 0xf065u16);
 
 // TODO condense similarly to get_xnn
-fn get_nnn(a: Option<Vec<String>>) -> CHIP8_PTR_SIZE {
+fn get_nnn(a: Option<Vec<String>>) -> CHIP8_SymAlias {
     if let Some(ref i) = a {
         if i.len() != 1 {
             panic!("c8r: wrong arg count")
         }
         let b: CHIP8_Arg = crate::bbu::parse_arg(&a.unwrap()[0]).unwrap();
-        **b.unwrap_memory().unwrap().v.unwrap_ptr().unwrap()
+        // TODO: avoid this clone in the future
+        b.unwrap_memory().unwrap().v.clone()
     } else {
         panic!("c8r: not enough args")
     }
@@ -300,6 +442,7 @@ fn get_xnn(a: Option<Vec<String>>) -> (CHIP8_ArchReg, CHIP8_DAT_SIZE) {
         if i.len() != 2 {
             panic!("c8r: not enough args")
         }
+        // TODO: move these directly in
         // data
         let b: CHIP8_Arg = crate::bbu::parse_arg(&a.as_ref().unwrap()[0]).unwrap();
         // register X

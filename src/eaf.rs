@@ -47,7 +47,9 @@ pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec
     // TODO: better error handling
     let mut p: crate::parser::Parser = crate::parser::Parser::from_str(src).unwrap();
     p.parse_all();
-    let mut l: crate::lexer::Lexer = crate::lexer::Lexer::from_vdq(p.pop_vdq(), pl.clone());
+    // TODO: fix EAF, Lexer, Platform to work based on type placement
+    let mut l: crate::lexer::Lexer<crate::bbu::chip8_raw::CHIP8_Symbol> =
+        crate::lexer::Lexer::from_vdq(p.pop_vdq(), pl.clone());
     // TODO: apparently another untouched result
     l.lex_full_queue();
     let mut r: Vec<u8> = vec![];

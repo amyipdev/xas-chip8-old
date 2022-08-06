@@ -108,15 +108,39 @@ pub trait DeserializeReg {
     where
         Self: Sized;
 }
-*/
+ */
 
-pub trait ArchInstruction {
+pub type SymbolPosition = u8;
+
+pub type UnresSymInfo<'a> = (&'a String, SymbolPosition);
+
+pub trait SymConv {
+    fn from_ptr<T: PTR_SIZE>(a: T) -> Self;
+    fn from_dat<T: DAT_SIZE>(a: T) -> Self;
+    fn into_ptr<T: PTR_SIZE, E: Integral>(&self) -> T;
+}
+
+//impl<T> SymConv for T where T: From<PTR_SIZE> + From<DAT_SIZE> {}
+
+pub trait ArchSym<T: SymConv> {
+    fn get_uk_sym(&self) -> Option<&String>;
+    fn set_sym(&mut self, a: T) -> ();
+}
+
+// TODO: really hate using vecs for this
+pub trait ArchInstruction<T: SymConv> {
     fn get_output_bytes(&self) -> Vec<u8>;
+    fn check_symbols(&self) -> bool;
+    fn get_symbols(&self) -> Option<Vec<UnresSymInfo>>;
+    fn get_placeholder(&self) -> Vec<u8>;
+    // NOTE: should this return Result<>? Shouldn't be able to fail...
+    fn fulfill_symbol(&mut self, s: T, p: SymbolPosition) -> ();
     fn get_lex(a: Option<Vec<String>>) -> Self
     where
         Self: Sized;
 }
 
+// TODO FIXME: support symbols in macros
 pub trait ArchMacro {
     fn get_output_bytes(&self) -> Vec<u8>;
     fn get_lex(a: Option<Vec<String>>) -> Self
@@ -208,10 +232,16 @@ pub fn parse_argument<T>(p: &crate::platform::Platform, a: &String) -> Option<Ar
 pub trait PTR_SIZE:
     Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
 {
+    // FIXME: transmute function
+    // FIXME FIXME: native sizing?
+    fn from_int<T: Integral>(a: T) -> Self;
+    fn extract_int<T: Integral>(&self) -> T;
 }
 pub trait DAT_SIZE:
     Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
 {
+    fn from_int<T: Integral>(a: T) -> Self;
+    fn extract_int<T: Integral>(&self) -> T;
 }
 pub trait DIS_SIZE:
     Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
@@ -225,13 +255,19 @@ pub trait DIS_SIZE:
 
 // TODO NOTE extremely utility
 pub trait Integral:
-    num_traits::WrappingNeg + num_traits::NumAssign + num_traits::cast::FromPrimitive + Copy + Clone
+    num_traits::WrappingNeg
+    + num_traits::NumAssign
+    + num_traits::cast::FromPrimitive
+    + num_traits::cast::NumCast
+    + Copy
+    + Clone
 {
 }
 impl<T> Integral for T where
     T: num_traits::WrappingNeg
         + num_traits::NumAssign
         + num_traits::cast::FromPrimitive
+        + num_traits::cast::NumCast
         + Copy
         + Clone
 {
@@ -251,8 +287,27 @@ impl<T: Integral> std::str::FromStr for GenScal<T> {
     }
 }
 
-impl<T: Integral> PTR_SIZE for GenScal<T> {}
-impl<T: Integral> DAT_SIZE for GenScal<T> {}
+// TODO: reduce code dup
+impl<T: Integral> PTR_SIZE for GenScal<T> {
+    fn from_int<E: Integral>(a: E) -> Self {
+        Self {
+            i: num_traits::cast::cast(a).unwrap(),
+        }
+    }
+    fn extract_int<E: Integral>(&self) -> E {
+        num_traits::cast::cast(self.i).unwrap()
+    }
+}
+impl<T: Integral> DAT_SIZE for GenScal<T> {
+    fn from_int<E: Integral>(a: E) -> Self {
+        Self {
+            i: num_traits::cast::cast(a).unwrap(),
+        }
+    }
+    fn extract_int<E: Integral>(&self) -> E {
+        num_traits::cast::cast(self.i).unwrap()
+    }
+}
 impl<T: Integral> DIS_SIZE for GenScal<T> {}
 
 // TODO: macro for these odd-ball types
@@ -270,8 +325,27 @@ impl std::str::FromStr for Gen12 {
     }
 }
 
-impl PTR_SIZE for Gen12 {}
-impl DAT_SIZE for Gen12 {}
+// TODO minimize code dup
+impl PTR_SIZE for Gen12 {
+    fn from_int<E: Integral>(a: E) -> Self {
+        Self {
+            i: num_traits::cast::cast::<E, u16>(a).unwrap() | 0xfffu16,
+        }
+    }
+    fn extract_int<E: Integral>(&self) -> E {
+        num_traits::cast::cast(self.i).unwrap()
+    }
+}
+impl DAT_SIZE for Gen12 {
+    fn from_int<E: Integral>(a: E) -> Self {
+        Self {
+            i: num_traits::cast::cast::<E, u16>(a).unwrap() | 0xfffu16,
+        }
+    }
+    fn extract_int<E: Integral>(&self) -> E {
+        num_traits::cast::cast(self.i).unwrap()
+    }
+}
 impl DIS_SIZE for Gen12 {}
 
 //pub struct Dat12
@@ -324,15 +398,26 @@ fn parse_ukr<T: Integral>(s: &str) -> Option<T> {
 // TODO FIXME better error type
 pub trait ArchReg: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
 
+#[derive(Clone)]
 pub enum ArgSymbol<T: PTR_SIZE, U: DAT_SIZE> {
-    Unknown(String),
+    UnknownPointer(String),
+    UnknownData(String),
     Pointer(Box<T>),
     Data(Box<U>),
 }
 
+// condense these unwrapper functions TODO
 impl<T: PTR_SIZE, U: DAT_SIZE> ArgSymbol<T, U> {
-    pub fn unwrap_unknown(&self) -> Option<&String> {
-        if let ArgSymbol::Unknown(n) = self {
+    pub fn unwrap_unknown_ptr(&self) -> Option<&String> {
+        if let ArgSymbol::UnknownPointer(n) = self {
+            return Some(n);
+        } else {
+            return None;
+        }
+    }
+
+    pub fn unwrap_unknown_data(&self) -> Option<&String> {
+        if let ArgSymbol::UnknownData(n) = self {
             return Some(n);
         } else {
             return None;
@@ -475,7 +560,7 @@ fn get_direct_value<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
     if s.chars().all(|x| (x.is_numeric() || "-xbd".contains(x))) {
         return ArgSymbol::Data(Box::new(U::from_str(s).unwrap()));
     } else {
-        return ArgSymbol::Unknown(s.clone());
+        return ArgSymbol::UnknownData(s.clone());
     }
 }
 
@@ -537,7 +622,7 @@ fn extract_mem_symbol<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
     if ns.chars().next().unwrap().is_numeric() || ns.chars().next().unwrap() == '-' {
         return ArgSymbol::Pointer(Box::new(T::from_str(&ns).unwrap()));
     } else {
-        return ArgSymbol::Unknown(ns);
+        return ArgSymbol::UnknownPointer(ns);
     }
 }
 

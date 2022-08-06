@@ -21,8 +21,8 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
-pub fn run_output(
-    src: Vec<crate::lexer::LexSection>,
+pub fn run_output<T: crate::bbu::SymConv>(
+    src: Vec<crate::lexer::LexSection<T>>,
     dest: &mut Vec<u8>,
     plat: &crate::platform::Platform,
 ) -> () {
@@ -41,7 +41,7 @@ pub fn run_output(
     // TODO: list a label
     for section in src {
         for label_t in &section.labels {
-            let label: (&crate::lexer::LexIdLabel, Option<&String>) = label_t.extract();
+            let label: (&crate::lexer::LexIdLabel<T>, Option<&String>) = label_t.extract();
             if let Some(n) = label.1 {
                 // TODO: another candidate for `&str`ification
                 lt.insert(n.to_string(), pos);

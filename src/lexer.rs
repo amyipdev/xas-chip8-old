@@ -66,12 +66,12 @@ use std::collections::VecDeque;
 // for sections like rodata and BSS. Flags are set based on input ID
 // type from platform.
 
-pub enum LexOperation {
-    Instruction(Box<dyn crate::bbu::ArchInstruction>),
+pub enum LexOperation<T: crate::bbu::SymConv> {
+    Instruction(Box<dyn crate::bbu::ArchInstruction<T>>),
     Macro(Box<dyn crate::bbu::ArchMacro>),
 }
 
-impl std::fmt::Debug for LexOperation {
+impl<T: crate::bbu::SymConv> std::fmt::Debug for LexOperation<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             LexOperation::Instruction(ref i) => {
@@ -83,7 +83,7 @@ impl std::fmt::Debug for LexOperation {
 }
 
 // TODO: consider changing all instances working with lexop to extract/place
-impl LexOperation {
+impl<T: crate::bbu::SymConv> LexOperation<T> {
     // TODO: has to be a better way to optimize this
     // pulling things out of enums is such a size increaser
     // would struct with associated non-holding enum be better?
@@ -98,25 +98,25 @@ impl LexOperation {
     }
 }
 
-pub type LexIdLabel = Vec<LexOperation>;
+pub type LexIdLabel<T: crate::bbu::SymConv> = Vec<LexOperation<T>>;
 
 #[derive(Debug)]
-pub struct LexLabel {
+pub struct LexLabel<T: crate::bbu::SymConv> {
     pub name: String,
-    pub ops: LexIdLabel,
+    pub ops: LexIdLabel<T>,
 }
 
 // TODO: consider rep. man. debug, see for all Lex types
 #[derive(Debug)]
-pub enum LexLabelType {
-    Base(LexIdLabel),
-    Std(LexLabel),
+pub enum LexLabelType<T: crate::bbu::SymConv> {
+    Base(LexIdLabel<T>),
+    Std(LexLabel<T>),
 }
 
 // TODO: change anything interacting with LexLabelType to use extract
 // TODO: make extract_mut to allow placement
-impl LexLabelType {
-    pub fn extract(&self) -> (&LexIdLabel, Option<&String>) {
+impl<T: crate::bbu::SymConv> LexLabelType<T> {
+    pub fn extract(&self) -> (&LexIdLabel<T>, Option<&String>) {
         // TODO: is this best?
         match self {
             LexLabelType::Base(ref a) => (a, None),
@@ -126,28 +126,30 @@ impl LexLabelType {
 }
 
 #[derive(Debug)]
-pub struct LexSection {
+pub struct LexSection<T: crate::bbu::SymConv> {
     pub name: String,
-    pub labels: Vec<LexLabelType>,
+    pub labels: Vec<LexLabelType<T>>,
 }
 
 // TODO: consider replacing with manual Debug trait
 #[derive(Debug)]
-pub struct Lexer {
+// TODO: import crate::bbu::SymConv
+pub struct Lexer<T: crate::bbu::SymConv> {
     // This method requires that the Lexer takes ownership of a
     // Parser's d-out.
     q: VecDeque<crate::parser::ParsedOperation>,
-    d: Vec<LexSection>,
+    d: Vec<LexSection<T>>,
     // Current section
-    cs: Option<LexSection>,
+    cs: Option<LexSection<T>>,
     // Current label
-    cl: Option<LexLabelType>,
+    cl: Option<LexLabelType<T>>,
     // Platform
     p: crate::platform::Platform,
 }
 
 // TODO: explore whether vec![] is better/worse than Vec::new()
-impl Lexer {
+// TODO: remove unnecessary type locking on impl
+impl<T: crate::bbu::SymConv> Lexer<T> {
     // push_label does not generate a new label because it could be called
     // on the last label of a section - we wouldn't want a new std label,
     // as that new section needs its own id label
@@ -220,7 +222,7 @@ impl Lexer {
 
     // implementation taken from parser::Parser::pop_vdq
     // TODO: reduce code dup?
-    pub fn pop_vdq(&mut self) -> Vec<LexSection> {
+    pub fn pop_vdq(&mut self) -> Vec<LexSection<T>> {
         std::mem::replace(&mut self.d, Vec::new())
     }
 
@@ -295,9 +297,9 @@ impl Lexer {
             // NOTE: _ is unreachable, this is a safety measure while indev
             // FIXME consider removing it in cleanup
             // TODO: move this responsibility over to BBU global thanks to ArchArg
-            let op: LexOperation = match self.p.arch {
+            let op: LexOperation<T> = match self.p.arch {
                 crate::platform::PlatformArch::ChipEightRaw => {
-                    LexOperation::Instruction(crate::bbu::chip8_raw::get_instruction(i))
+                    LexOperation::Instruction(crate::bbu::chip8_raw::get_instruction::<T>(i))
                 }
                 _ => panic!("architecture not implemented yet"),
             };

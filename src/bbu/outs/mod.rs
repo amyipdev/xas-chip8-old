@@ -26,8 +26,8 @@ pub mod rawbin;
 // T is the architecture's pointer size
 pub type LabelTree<T> = std::collections::HashMap<String, T>;
 
-pub fn run_output(
-    src: Vec<crate::lexer::LexSection>,
+pub fn run_output<T: crate::bbu::SymConv>(
+    src: Vec<crate::lexer::LexSection<T>>,
     dest: &mut Vec<u8>,
     plat: &crate::platform::Platform,
 ) -> Result<(), Box<dyn std::error::Error>> {
