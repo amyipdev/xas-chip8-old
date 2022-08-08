@@ -338,7 +338,7 @@ impl std::str::FromStr for Gen12 {
 impl PTR_SIZE for Gen12 {
     fn from_int<E: Integral>(a: E) -> Self {
         Self {
-            i: num_traits::cast::cast::<E, u16>(a).unwrap() | 0xfffu16,
+            i: num_traits::cast::cast::<E, u16>(a).unwrap() & 0xfffu16,
         }
     }
     fn extract_int<E: Integral>(&self) -> E {
@@ -347,11 +347,11 @@ impl PTR_SIZE for Gen12 {
     // TODO: make all size limitations happen on extraction..?
     fn add_int<E: Integral>(&mut self, a: E) -> () {
         self.i += num_traits::cast::cast::<E, u16>(a).unwrap();
-        self.i |= 0xfff;
+        self.i &= 0xfff;
     }
     fn add_ptr(&mut self, a: Self) -> () {
         self.i += a.i;
-        self.i |= 0xfff;
+        self.i &= 0xfff;
     }
 }
 impl DAT_SIZE for Gen12 {

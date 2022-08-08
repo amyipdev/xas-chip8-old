@@ -231,6 +231,10 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
     // TODO: this is the MAIN FUNCTION so DISTRIBUTE IT OUT MORE
     // TODO: + find more optimizations
     pub fn lex_full_queue(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        // the default section will be called ".__defsection" which should not have conflicts
+        if self.cs.is_none() {
+            self.gen_section(Some(vec![".__defsection".to_string()]))
+        }
         while let Some(i) = self.q.pop_front() {
             if let crate::parser::ParsedOperation::Macro(j) = i {
                 // Override for label beginnings
