@@ -43,6 +43,7 @@ use std::str::FromStr;
 // as it takes in a flexible &str (TODO: consider moving to u8 input? might be bad)
 // and returns Vec<u8>, which is the most flexible of all - and doesn't generate
 // any data/configuration on its own
+/*
 pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec<u8> {
     // TODO: better error handling
     let mut p: crate::parser::Parser = crate::parser::Parser::from_str(src).unwrap();
@@ -57,6 +58,7 @@ pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec
     crate::bbu::outs::run_output(l.pop_vdq(), &mut r, pl);
     r
 }
+*/
 
 // Copied TODOs from main:
 // - TODO: instead of manual .next(), consider .skip(1) or else

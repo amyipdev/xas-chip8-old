@@ -116,11 +116,11 @@ pub enum LexLabelType<T: crate::bbu::SymConv> {
 // TODO: change anything interacting with LexLabelType to use extract
 // TODO: make extract_mut to allow placement
 impl<T: crate::bbu::SymConv> LexLabelType<T> {
-    pub fn extract(&self) -> (&LexIdLabel<T>, Option<&String>) {
+    pub fn extract(self) -> (LexIdLabel<T>, Option<String>) {
         // TODO: is this best?
         match self {
-            LexLabelType::Base(ref a) => (a, None),
-            LexLabelType::Std(ref b) => (&b.ops, Some(&b.name)),
+            LexLabelType::Base(a) => (a, None),
+            LexLabelType::Std(b) => (b.ops, Some(b.name)),
         }
     }
 }

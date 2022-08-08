@@ -23,6 +23,7 @@
 
 pub mod rawbin;
 
+/*
 // T is the architecture's pointer size
 pub type LabelTree<T> = std::collections::HashMap<String, T>;
 
@@ -46,5 +47,22 @@ pub fn get_offset(p: &crate::platform::Platform) -> u64 {
             crate::platform::PlatformArch::ChipEightRaw,
             crate::platform::PlatformTarget::RawBinary,
         ) => 0x200,
+    }
+}
+ */
+
+pub type LabelTree<T: crate::bbu::SymConv> = std::collections::HashMap<String, T>;
+
+// TODO: fix inherent cloning issues with String
+// also, TODO: it is absolutely not necessary for these to be ordered
+pub type UnresSymTree<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE> = Vec<(Box<dyn crate::bbu::ArchInstruction<T>>, U)>;
+
+// TODO NOTE: utility function
+// o = offset
+pub fn vec_update(s: &Vec<u8>, d: &mut Vec<u8>, o: usize) -> () {
+    // TODO: make this more efficient, this is slow asf
+    // also, TODO: make this work for Vec<T: Integral>
+    for e in 0..s.len() {
+        d[o + e] = s[e];
     }
 }

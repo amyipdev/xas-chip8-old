@@ -179,6 +179,7 @@ fn chip8_placeholder() -> Vec<u8> {
 
 macro_rules! make_std_const {
     ($nm:ident,$offs:expr) => {
+        #[derive(Clone)]
         pub struct $nm {}
         impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
@@ -196,13 +197,14 @@ macro_rules! make_std_const {
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
-            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {}
+            fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {}
         }
     };
 }
 
 macro_rules! make_std_nnn {
     ($nm:ident,$offs:expr) => {
+        #[derive(Clone)]
         pub struct $nm {
             addr: CHIP8_SymAlias,
         }
@@ -228,7 +230,7 @@ macro_rules! make_std_nnn {
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
-            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {
+            fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {
                 match p {
                     0 => {
                         self.addr = crate::bbu::ArgSymbol::Pointer(Box::new(
@@ -251,6 +253,7 @@ macro_rules! make_std_nnn {
 // NOTE: optimize
 macro_rules! make_std_xnn {
     ($nm:ident,$offs:expr) => {
+        #[derive(Clone)]
         pub struct $nm {
             x: CHIP8_ArchReg,
             d: CHIP8_SymAlias,
@@ -278,7 +281,7 @@ macro_rules! make_std_xnn {
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
-            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {
+            fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {
                 match p {
                     0 => {
                         self.d = crate::bbu::ArgSymbol::Data(Box::new(
@@ -295,6 +298,7 @@ macro_rules! make_std_xnn {
 // TODO: general for archinstruction, is vec best? could boxed slice work better?
 macro_rules! make_std_xy {
     ($nm:ident,$offs:expr) => {
+        #[derive(Clone)]
         pub struct $nm {
             s: CHIP8_ArchReg,
             d: CHIP8_ArchReg,
@@ -319,7 +323,7 @@ macro_rules! make_std_xy {
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
-            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {}
+            fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {}
         }
     };
 }
@@ -328,6 +332,8 @@ macro_rules! make_std_xy {
 // XYN = $N,%vX,%vY
 macro_rules! make_std_xyn {
     ($nm:ident,$offs:expr) => {
+        // TODO: in the future, let's stray away from needing Copy and Clone
+        #[derive(Clone)]
         pub struct $nm {
             n: CHIP8_SymAlias,
             x: CHIP8_ArchReg,
@@ -367,7 +373,7 @@ macro_rules! make_std_xyn {
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
-            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {
+            fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {
                 match p {
                     0 => {
                         self.n = crate::bbu::ArgSymbol::Data(Box::new(
@@ -385,6 +391,7 @@ macro_rules! make_std_xyn {
 // NOTE wish I had a macro for making these macros
 macro_rules! make_std_efx {
     ($nm:ident,$offs:expr) => {
+        #[derive(Clone)]
         pub struct $nm {
             x: CHIP8_ArchReg,
         }
@@ -405,7 +412,7 @@ macro_rules! make_std_efx {
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
-            fn fulfill_symbol(&mut self, s: T, p: crate::bbu::SymbolPosition) -> () {}
+            fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {}
         }
     };
 }

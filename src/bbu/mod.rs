@@ -134,7 +134,8 @@ pub trait ArchInstruction<T: SymConv> {
     fn get_symbols(&self) -> Option<Vec<UnresSymInfo>>;
     fn get_placeholder(&self) -> Vec<u8>;
     // NOTE: should this return Result<>? Shouldn't be able to fail...
-    fn fulfill_symbol(&mut self, s: T, p: SymbolPosition) -> ();
+    fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> ();
+    // TODO: is it better to put Sized in the ArchInstruction definition?
     fn get_lex(a: Option<Vec<String>>) -> Self
     where
         Self: Sized;
@@ -236,6 +237,8 @@ pub trait PTR_SIZE:
     // FIXME FIXME: native sizing?
     fn from_int<T: Integral>(a: T) -> Self;
     fn extract_int<T: Integral>(&self) -> T;
+    fn add_int<T: Integral>(&mut self, a: T) -> ();
+    fn add_ptr(&mut self, a: Self) -> ();
 }
 pub trait DAT_SIZE:
     Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
@@ -297,6 +300,12 @@ impl<T: Integral> PTR_SIZE for GenScal<T> {
     fn extract_int<E: Integral>(&self) -> E {
         num_traits::cast::cast(self.i).unwrap()
     }
+    fn add_int<E: Integral>(&mut self, a: E) -> () {
+        self.i += num_traits::cast::cast(a).unwrap()
+    }
+    fn add_ptr(&mut self, a: Self) -> () {
+        self.i += a.i
+    }
 }
 impl<T: Integral> DAT_SIZE for GenScal<T> {
     fn from_int<E: Integral>(a: E) -> Self {
@@ -334,6 +343,15 @@ impl PTR_SIZE for Gen12 {
     }
     fn extract_int<E: Integral>(&self) -> E {
         num_traits::cast::cast(self.i).unwrap()
+    }
+    // TODO: make all size limitations happen on extraction..?
+    fn add_int<E: Integral>(&mut self, a: E) -> () {
+        self.i += num_traits::cast::cast::<E, u16>(a).unwrap();
+        self.i |= 0xfff;
+    }
+    fn add_ptr(&mut self, a: Self) -> () {
+        self.i += a.i;
+        self.i |= 0xfff;
     }
 }
 impl DAT_SIZE for Gen12 {
