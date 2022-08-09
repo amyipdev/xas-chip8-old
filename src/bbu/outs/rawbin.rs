@@ -64,7 +64,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
     // consider just returning the Vec... or, better yet, manually clearing it!
     // to deal with overhead, I think Vec is just a pointer...
     dest: &mut Vec<u8>,
-    plat: &crate::platform::Platform
+    plat: &crate::platform::Platform,
 ) -> () {
     let offs: U = get_offset(plat);
     // NOTE: vecs only support indices of usize
@@ -98,7 +98,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
                             n.get_output_bytes()
                         }
                     }
-                    _ => panic!("rawbin: unsupported op type")
+                    _ => panic!("rawbin: unsupported op type"),
                 };
                 cp.add_int(b.len());
                 dest.extend(b);
@@ -147,6 +147,6 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
 pub fn get_offset<T: crate::bbu::PTR_SIZE>(p: &crate::platform::Platform) -> T {
     match &p.arch {
         ChipEightRaw => T::from_int(0x200),
-        _ => panic!("unknown arch")
+        _ => panic!("unknown arch"),
     }
 }

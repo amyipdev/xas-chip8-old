@@ -55,7 +55,8 @@ pub type LabelTree<T: crate::bbu::SymConv> = std::collections::HashMap<String, T
 
 // TODO: fix inherent cloning issues with String
 // also, TODO: it is absolutely not necessary for these to be ordered
-pub type UnresSymTree<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE> = Vec<(Box<dyn crate::bbu::ArchInstruction<T>>, U)>;
+pub type UnresSymTree<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE> =
+    Vec<(Box<dyn crate::bbu::ArchInstruction<T>>, U)>;
 
 // TODO NOTE: utility function
 // o = offset
@@ -65,4 +66,17 @@ pub fn vec_update(s: &Vec<u8>, d: &mut Vec<u8>, o: usize) -> () {
     for e in 0..s.len() {
         d[o + e] = s[e];
     }
+}
+
+pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
+    src: Vec<crate::lexer::LexSection<T>>,
+    dest: &mut Vec<u8>,
+    plat: &crate::platform::Platform,
+) -> () {
+    // each combination could need something different, so each is explicit
+    // TODO generate this with macros
+    (match plat.target {
+        crate::platform::PlatformTarget::RawBinary => rawbin::run_output::<T, U>,
+        _ => panic!("unsupported combination"),
+    })(src, dest, plat);
 }

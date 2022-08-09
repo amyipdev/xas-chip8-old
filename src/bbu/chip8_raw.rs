@@ -260,7 +260,10 @@ macro_rules! make_std_xnn {
         }
         impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
-                Vec::from(($offs | ((self.x.n as u16) << 8) | (self.d.unwrap_data().unwrap().i as u16)).to_be_bytes())
+                Vec::from(
+                    ($offs | ((self.x.n as u16) << 8) | (self.d.unwrap_data().unwrap().i as u16))
+                        .to_be_bytes(),
+                )
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 let b: (CHIP8_ArchReg, CHIP8_SymAlias) = get_xnn(a);
@@ -269,13 +272,13 @@ macro_rules! make_std_xnn {
             fn check_symbols(&self) -> bool {
                 match self.d {
                     crate::bbu::ArgSymbol::UnknownData(_) => true,
-                    _ => false
+                    _ => false,
                 }
             }
             fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
                 match self.d {
                     crate::bbu::ArgSymbol::UnknownData(ref a) => Some(vec![(a, 0)]),
-                    _ => None
+                    _ => None,
                 }
             }
             fn get_placeholder(&self) -> Vec<u8> {
@@ -288,7 +291,7 @@ macro_rules! make_std_xnn {
                             s.into_ptr::<CHIP8_DAT_SIZE, u8>(),
                         ))
                     }
-                    _ => panic!("c8r: unknown positional")
+                    _ => panic!("c8r: unknown positional"),
                 }
             }
         }
@@ -361,13 +364,13 @@ macro_rules! make_std_xyn {
             fn check_symbols(&self) -> bool {
                 match self.n {
                     crate::bbu::ArgSymbol::UnknownData(_) => true,
-                    _ => false
+                    _ => false,
                 }
             }
             fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
                 match self.n {
                     crate::bbu::ArgSymbol::UnknownData(ref a) => Some(vec![(a, 0)]),
-                    _ => None
+                    _ => None,
                 }
             }
             fn get_placeholder(&self) -> Vec<u8> {
@@ -380,7 +383,7 @@ macro_rules! make_std_xyn {
                             s.into_ptr::<CHIP8_DAT_SIZE, u8>(),
                         ))
                     }
-                    _ => panic!("c8r: unknown positional")
+                    _ => panic!("c8r: unknown positional"),
                 }
             }
         }

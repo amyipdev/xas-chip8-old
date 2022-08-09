@@ -58,7 +58,34 @@ pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec
     crate::bbu::outs::run_output(l.pop_vdq(), &mut r, pl);
     r
 }
-*/
+ */
+
+// Parser is type-neutral, but everything from then on isn't...
+pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec<u8> {
+    let mut p: crate::parser::Parser = crate::parser::Parser::from_str(src).unwrap();
+    p.parse_all();
+    // if only rust could return types from matches...
+    (match pl.arch {
+        crate::platform::PlatformArch::ChipEightRaw => {
+            assemble_full_source_gen::<
+                crate::bbu::chip8_raw::CHIP8_Symbol,
+                crate::bbu::chip8_raw::CHIP8_PTR_SIZE,
+            >
+        }
+    })(p.pop_vdq(), pl)
+}
+
+// naturally handles lexer-onwards
+pub fn assemble_full_source_gen<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
+    s: std::collections::VecDeque<crate::parser::ParsedOperation>,
+    p: &crate::platform::Platform,
+) -> Vec<u8> {
+    let mut l: crate::lexer::Lexer<T> = crate::lexer::Lexer::from_vdq(s, p.clone());
+    l.lex_full_queue();
+    let mut r: Vec<u8> = Vec::new();
+    crate::bbu::outs::run_output::<T, U>(l.pop_vdq(), &mut r, p);
+    r
+}
 
 // Copied TODOs from main:
 // - TODO: instead of manual .next(), consider .skip(1) or else
