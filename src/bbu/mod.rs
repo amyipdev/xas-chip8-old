@@ -57,59 +57,6 @@
 pub mod chip8_raw;
 pub mod outs;
 
-/* reference code, not currently in use
- * TODO FIXME remove as dead once full ArchArg implementation, parser exists
-
-// NOTE: T is architecture pointer type
-// TODO: use that T elsewhere for labelmaking?
-pub enum ArchArg<T> {
-    // TODO: consider moving Mem into an ArchMem or the like
-    // modeled off of ArchReg, tuples in an enum feels wonky
-    // FIXME mem needs better support for x86 - segments
-    Mem(T),
-    Reg(ArchReg<T>),
-    // TODO: other modes
-    Dir(T)
-}
-
-// TODO: more of this type declaration instead of stray boxes
-pub type Register = Box<dyn DeserializeReg>;
-
-// FIXME: actually implement ArchArg
-// TODO: see lexer, do arch handling here instead of in the lexer
-
-// NOTE: r is register name
-// NOTE: d is dereference info
-// TODO: include support for x86 segment registers
-// fs:(eax) or whatever
-// maybe this belongs up there?
-pub struct ArchReg<T> {
-    pub r: Register,
-    // deref with no offset = Some(0)
-    // no deref = None
-    // TODO: split this up into struct maybe? tuple is annoying
-    // NOTE: Option<(Register, u8)> is shift, maybe make it a Type TODO
-    //       - also consider TODO making the internal function-extractable
-    //       - or something besides a tuple
-    // FIXME support segment shifts like on x86
-    pub d: Option<(T, Option<(Register, u8)>)>,
-    // sample instruction: (i386)
-    // 8d 74 c3 04       lea 0x4(%ebx,%eax,8),%esi
-    // equ:              lea esi,[ebx + 8*eax + 4]
-    // NOTE: the shift number given is the raw number,
-    // but it must be a power of 2. it is then for x86
-    // turned into its log2, so for this it would be 3
-    // (which is the maximum permitted shift)
-}
-
-// FIXME reminder to check -> Self instead of -> Name
-pub trait DeserializeReg {
-    fn deserialize(i: &String) -> Self
-    where
-        Self: Sized;
-}
- */
-
 pub type SymbolPosition = u8;
 
 pub type UnresSymInfo<'a> = (&'a String, SymbolPosition);
@@ -119,8 +66,6 @@ pub trait SymConv {
     fn from_dat<T: DAT_SIZE>(a: T) -> Self;
     fn into_ptr<T: PTR_SIZE, E: Integral>(&self) -> T;
 }
-
-//impl<T> SymConv for T where T: From<PTR_SIZE> + From<DAT_SIZE> {}
 
 pub trait ArchSym<T: SymConv> {
     fn get_uk_sym(&self) -> Option<&String>;
@@ -192,36 +137,6 @@ pub fn parse_unknown_radix_u16(s: &String) -> Option<u16> {
         _ => u16::from_str_radix(s, 10).unwrap(),
     })
 }
-
-/*
-// Parsing system
-// no symbol: memory location
-// $: direct value
-// %: register
-// (): deref
-// so, on x86 to move 0x35 to ptr@rax(shift-4):
-// mov $0x35,-4(%rax)
-// TODO evaluate if pub is necessary
-// TODO should this be an impl on ArchArg?
-// FIXME properly implement error handling with result, make own error type, etc etc etc
-pub fn parse_argument<T>(p: &crate::platform::Platform, a: &String) -> Option<ArchArg<T>> {
-    // TODO: find a better solution than many bools (bitfield?) bools take up 1 byte each?
-    let mut f_end_parth: bool = false;
-
-    // iterator to make processing easier
-    // TODO copy iterator type to all Chars, Peekable<Chars>
-    let mut i: std::iter::Peekable<std::str::Chars> = a.chars().peekable();
-    // a parenthesis will always be the last character
-    // TODO optimize, error handling FIXME
-    if a.chars().last().unwrap() == ')' {
-        f_end_parth = true;
-        i.next_back();
-    }
-
-    None
-}
-
- */
 
 // TODO NOTE FIXME consider refactoring all of this into parser, so it happens pre-lexing?? maybe??
 
@@ -388,12 +303,6 @@ fn uw_aid<T, E>(r: Result<T, E>) -> T {
 // TODO FIXME better error handling
 fn parse_ukr<T: Integral>(s: &str) -> Option<T> {
     // TODO: optimize, this is horribly inefficient to have to recollect the iterator
-    /*
-    let mut i = s.chars().peekable();
-    let sign = if i.peek() == Some(&'-') {i.next(); true} else {false};
-    let col: String = i.collect();
-    let r: &str = &*col;
-     */
     // End immediately on empty strings
     if s.len() == 0 {
         return None;
@@ -624,16 +533,6 @@ fn parse_reg_clause<V: DIS_SIZE, W: ArchReg>(s: &String) -> RegClauseInfo<V, W> 
     }
     (disp, reg, shift)
 }
-
-/*
-// true = reg, false = mem
-// TODO: consider changing receptive arguments from &String to &str NOTE cross-projecct
-fn detect_mem_reg(s: &String) -> bool {
-    // TODO: optimize these traversals
-    // TODO: minimize code dup
-    return s.chars().nth(0) == Some('%') || s.chars().nth(1) == Some('%');
-}
-*/
 
 fn extract_mem_symbol<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
     let ns: String = trim_parentheses(s);
