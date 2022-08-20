@@ -7,6 +7,8 @@
 <img src="https://img.shields.io/github/repo-size/amyipdev/libxas">
 </p>
 
+TODO: Links, table-of-contents
+
 The Extendable Assembler Library, or **libxas**, is a power tool for assembly programmers, toolchain writers, 
 virtualization/emulation enthusiasts, and more. Using its powerful, efficient, and easy-to-integrate Rust stack,
 libxas allows anyone to easily write assembly for a wide span of different platforms, quickly assemble it into 
@@ -49,4 +51,39 @@ handles macro recognition and instruction formatting, and the **Lexer**, which h
 instructions into structures from BBU modules. These have extreme flexibility through powerful leverage of Rust 
 generics, allowing complex architectures to seamlessly integrate. 
 
+### Philosophy
 
+There are absolutely times when toolchains should be built for people "in-the-know". The LLVM and GCC toolchains do 
+their job very well, and are designed to be fully integrated at all stages of compiler creation. Tools like LLVM IR
+provide powerful abstraction and optimization. For a cutting-edge compiler, those types of tightly-woven toolchains
+and libraries are critical. However, not every use case is the next GCC. Often, people just want something simple and 
+easy to develop with. When dealing with assembly, this is especially important; assembly development time is extremely
+high, so time working with toolchains should be minimized. 
+
+To ensure that anyone can quickly and painlessly work with libxas, we are committed to simple, highly documented
+interfaces. Anyone with a new idea for an output format or ISA should not have to worry about initial time developing
+either a proof-of-concept or a stable production toolchain. 
+
+### Licensing and Libraries
+
+libxas is licensed under the GNU General Public License, version 2 (or, at your option, any later version). This was
+chosen to ensure user freedom while also guaranteeing derivations are available to the entire community.
+
+We also use the following libraries, which have their own respective licenses:
+* Regex (soon to be removed): v1.6.0, **MIT** and/or Apache-2.0
+* num_traits: v0.2.15, **MIT** and/or Apache-2.0
+
+### Usage 
+
+TBD - for now, look at the implementations of EAF
+
+### Contributions 
+
+Contributions are always welcome, and very much appreciated. You can:
+* Report bugs and suggest new features in Issues
+* Resolve TODOs/FIXMEs/NOTEs or make other contributions (please submit a Pull Request)
+* Help document libxas (instructions TBA)
+
+### Compatibility
+
+TODO (MSRV)
