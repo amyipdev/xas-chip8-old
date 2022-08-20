@@ -276,6 +276,13 @@ impl<T> Integral for T where
 {
 }
 
+// FIXME FIXME FIXME: See #5
+//
+// There is currently a major issue with casting between unequally sized
+// sizes. If the cast is of a number larger than the type can support,
+// it panics. We could make this a defined, official behavior - a "feature",
+// even - but for now, this is considered a KNOWN BUG.
+
 #[derive(Copy, Clone)]
 pub struct GenScal<T: Integral> {
     pub i: T,
