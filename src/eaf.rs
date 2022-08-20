@@ -28,6 +28,9 @@ use std::str::FromStr;
 // (or Extendible Assembler Frontend)
 // (or Extendible Assembler interFace)
 
+// NOTE: the following comments are archived comments which may or may not be applicable.
+// if they are not, please remove them. however, they were kept during initial file cleanup.
+
 // TODO: function with automatic platform detection
 // TODO: function to easily take a compiler combo (chip8-bin) and generate Platform
 
@@ -37,28 +40,11 @@ use std::str::FromStr;
 
 // TODO: this is a library, so good error handling is a must
 // need to get rid of ?s and .unwrap()s, and return a Result
-// TODO: should we clone here? or assume string consumption?
 // NOTE: this function should either be distributed out into a baseline function
 // called "assemble", or be treated as the baseline function itself
 // as it takes in a flexible &str (TODO: consider moving to u8 input? might be bad)
 // and returns Vec<u8>, which is the most flexible of all - and doesn't generate
 // any data/configuration on its own
-/*
-pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec<u8> {
-    // TODO: better error handling
-    let mut p: crate::parser::Parser = crate::parser::Parser::from_str(src).unwrap();
-    p.parse_all();
-    // TODO: fix EAF, Lexer, Platform to work based on type placement
-    let mut l: crate::lexer::Lexer<crate::bbu::chip8_raw::CHIP8_Symbol> =
-        crate::lexer::Lexer::from_vdq(p.pop_vdq(), pl.clone());
-    // TODO: apparently another untouched result
-    l.lex_full_queue();
-    let mut r: Vec<u8> = vec![];
-    // TODO: handle yielded Result apparently?
-    crate::bbu::outs::run_output(l.pop_vdq(), &mut r, pl);
-    r
-}
- */
 
 // Parser is type-neutral, but everything from then on isn't...
 pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec<u8> {

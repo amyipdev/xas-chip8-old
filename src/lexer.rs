@@ -21,7 +21,7 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
-// TODO: readme (rst? md? decide)
+// TODO: readme finishing (rst? md? decide)
 // TODO: styling guide
 //       - mod/crate/use order
 // TODO: improve CI (see PR #2)
