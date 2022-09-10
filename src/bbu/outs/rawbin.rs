@@ -21,41 +21,6 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
-/*
-pub fn run_output<T: crate::bbu::SymConv>(
-    src: Vec<crate::lexer::LexSection<T>>,
-    dest: &mut Vec<u8>,
-    plat: &crate::platform::Platform,
-) -> () {
-    // TODO: unresolved symbols! while we build the label tree, we don't link them yet
-    // TODO: dynamically size LabelTree entries... we want architecture pointer sizes
-    // overall TODO fix pointer sizes so that they are correct and dynamic to architecture
-    let mut lt: crate::bbu::outs::LabelTree<u64> = crate::bbu::outs::LabelTree::new();
-    // code duplication issue - redone across many files
-    // perhaps we should store the LT, offset, and position in a pre-generated structure?
-    // after all run_output calls do run through the global run_output which can pass a struct
-    // could actually pass everything as just one structure pointer... TODO
-    // also, NOTE offset is only used for implicit binary linking
-    let offset: u64 = crate::bbu::outs::get_offset(plat);
-    let mut pos: u64 = 0;
-
-    // TODO: list a label
-    for section in src {
-        for label_t in &section.labels {
-            let label: (&crate::lexer::LexIdLabel<T>, Option<&String>) = label_t.extract();
-            if let Some(n) = label.1 {
-                // TODO: another candidate for `&str`ification
-                lt.insert(n.to_string(), pos);
-            }
-            for op in label.0 {
-                dest.extend(op.extract_bytes());
-                pos += 2;
-            }
-        }
-    }
-}
- */
-
 // TODO: proj global, utilize burns (fn FNNAME(self), which drops the object)
 
 pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
@@ -103,6 +68,8 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
                 cp.add_int(b.len());
                 dest.extend(b);
             }
+        }
+    }
             // now for the linkage magic
             for i in &mut st {
                 // i.1 = the position this needs to be updated at
@@ -139,8 +106,6 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
                 // all the symbols are now fulfilled, so use the helper to insert the instr in
                 crate::bbu::outs::vec_update(&i.0.get_output_bytes(), dest, np);
             }
-        }
-    }
 }
 
 // TODO: move offsets into another part of BBU maybe? probably arch pages?

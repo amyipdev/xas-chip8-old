@@ -107,7 +107,7 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
         "4xnn" => gim!(Chip8_4XNN, i),
         "5xy0" => gim!(Chip8_5XY0, i),
         "6xnn" => gim!(Chip8_6XNN, i),
-        "7nnn" => gim!(Chip8_7XNN, i),
+        "7xnn" => gim!(Chip8_7XNN, i),
         "8xy0" => gim!(Chip8_8XY0, i),
         "8xy1" => gim!(Chip8_8XY1, i),
         "8xy2" => gim!(Chip8_8XY2, i),
@@ -120,7 +120,7 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
         "9xy0" => gim!(Chip8_9XY0, i),
         "annn" => gim!(Chip8_ANNN, i),
         "bnnn" => gim!(Chip8_BNNN, i),
-        "cnnn" => gim!(Chip8_CXNN, i),
+        "cxnn" => gim!(Chip8_CXNN, i),
         "dxyn" => gim!(Chip8_DXYN, i),
         "ex9e" => gim!(Chip8_EX9E, i),
         "exa1" => gim!(Chip8_EXA1, i),
@@ -222,10 +222,11 @@ macro_rules! make_std_nnn {
                 }
             }
             fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
-                match self.addr {
+                let r = match self.addr {
                     crate::bbu::ArgSymbol::UnknownPointer(ref a) => Some(vec![(a, 0)]),
                     _ => None,
-                }
+                };
+                r
             }
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
@@ -427,7 +428,7 @@ make_std_nnn!(Chip8_1NNN, 0x1000u16);
 make_std_nnn!(Chip8_2NNN, 0x2000u16);
 make_std_xnn!(Chip8_3XNN, 0x3000u16);
 make_std_xnn!(Chip8_4XNN, 0x4000u16);
-make_std_xnn!(Chip8_5XY0, 0x5000u16);
+make_std_xy!(Chip8_5XY0, 0x5000u16);
 make_std_xnn!(Chip8_6XNN, 0x6000u16);
 make_std_xnn!(Chip8_7XNN, 0x7000u16);
 make_std_xy!(Chip8_8XY0, 0x8000u16);
