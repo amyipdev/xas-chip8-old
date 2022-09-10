@@ -305,6 +305,9 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                 crate::platform::PlatformArch::ChipEightRaw => {
                     LexOperation::Instruction(crate::bbu::chip8_raw::get_instruction::<T>(i))
                 }
+                crate::platform::PlatformArch::ChipEight => {
+                    LexOperation::Instruction(crate::bbu::chip8::get_instruction::<T>(i))
+                }
                 _ => panic!("architecture not implemented yet"),
             };
             match j {

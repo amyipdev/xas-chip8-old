@@ -24,6 +24,7 @@
 #[derive(Clone, Debug)]
 pub enum PlatformArch {
     ChipEightRaw,
+    ChipEight,
 }
 
 #[derive(Clone, Debug)]
@@ -50,6 +51,7 @@ impl Platform {
             // TODO: consider using some kind of lookup table?
             arch: match arch.to_lowercase().as_str() {
                 "chipeightraw" | "chip8-raw" | "c8r" | "chip8r" => PlatformArch::ChipEightRaw,
+                "chipeight" | "chip8" | "c8" | "chip-8" => PlatformArch::ChipEight,
                 _ => panic!("unsupported arch"),
             },
             target: match target.to_lowercase().as_str() {

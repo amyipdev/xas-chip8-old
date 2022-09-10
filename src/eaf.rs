@@ -52,7 +52,7 @@ pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec
     p.parse_all();
     // if only rust could return types from matches...
     (match pl.arch {
-        crate::platform::PlatformArch::ChipEightRaw => {
+        crate::platform::PlatformArch::ChipEightRaw | crate::platform::PlatformArch::ChipEight => {
             assemble_full_source_gen::<
                 crate::bbu::chip8_raw::CHIP8_Symbol,
                 crate::bbu::chip8_raw::CHIP8_PTR_SIZE,

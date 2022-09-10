@@ -54,6 +54,7 @@
 // TODO: generic argument types (direct, label, memory, register, etc)
 // TODO: general symbol implementation
 
+pub mod chip8;
 pub mod chip8_raw;
 pub mod outs;
 
