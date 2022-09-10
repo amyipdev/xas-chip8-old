@@ -308,8 +308,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                 }
                 crate::platform::PlatformArch::ChipEight => {
                     LexOperation::Instruction(crate::bbu::chip8::get_instruction::<T>(i))
-                }
-                //_ => panic!("architecture not implemented yet"),
+                } //_ => panic!("architecture not implemented yet"),
             };
             match j {
                 LexLabelType::Base(ref mut a) => a,

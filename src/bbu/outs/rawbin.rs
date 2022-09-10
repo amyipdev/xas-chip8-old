@@ -62,8 +62,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
                         } else {
                             n.get_output_bytes()
                         }
-                    }
-                    //_ => panic!("rawbin: unsupported op type"),
+                    } //_ => panic!("rawbin: unsupported op type"),
                 };
                 cp.add_int(b.len());
                 dest.extend(b);

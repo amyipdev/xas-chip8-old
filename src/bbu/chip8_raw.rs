@@ -52,12 +52,12 @@ pub struct Chip8Symbol {
 
 // TODO: make this, other parts of ArgSymbol construction a macro
 impl crate::bbu::SymConv for Chip8Symbol {
-    // FIXME FIXME FIXME: into_ptr, into_dat
+    // FIXME FIXME FIXME: into_dat
     fn from_ptr<T: crate::bbu::PtrSize>(a: T) -> Self {
         Self {
-            i: crate::bbu::ArgSymbol::Pointer(Box::new(<Chip8PtrSize as PtrSize>::from_int::<
-                u16,
-            >(a.extract_int::<u16>()))),
+            i: crate::bbu::ArgSymbol::Pointer(Box::new(
+                <Chip8PtrSize as PtrSize>::from_int::<u16>(a.extract_int::<u16>()),
+            )),
         }
     }
     fn from_dat<T: crate::bbu::DatSize>(a: T) -> Self {
@@ -76,10 +76,10 @@ impl crate::bbu::SymConv for Chip8Symbol {
 
 impl<T: crate::bbu::SymConv> crate::bbu::ArchSym<T> for Chip8Symbol {
     fn get_uk_sym(&self) -> Option<&String> {
-        // TODO: PTR(i) | Data(i) => Some(i)?
         match &self.i {
-            crate::bbu::ArgSymbol::UnknownPointer(i) => Some(i),
-            crate::bbu::ArgSymbol::UnknownData(i) => Some(i),
+            crate::bbu::ArgSymbol::UnknownPointer(i) | crate::bbu::ArgSymbol::UnknownData(i) => {
+                Some(i)
+            }
             _ => None,
         }
     }
@@ -149,7 +149,7 @@ impl FromStr for Chip8ArchReg {
         if s.len() > 3 || s.len() < 2 {
             panic!("chip8_raw: unknown register")
         } else {
-            // TODO: FIXME TODO ensure full UTF-8 compatibility crossproj
+            // NOTE: consider full UTF-8 support
             let a: char = s.chars().nth(2).unwrap();
             Ok(Chip8ArchReg {
                 n: char::to_digit(
@@ -168,8 +168,7 @@ impl FromStr for Chip8ArchReg {
 
 impl crate::bbu::ArchReg for Chip8ArchReg {}
 
-pub type Chip8Arg =
-    crate::bbu::ArchArg<Chip8PtrSize, Chip8DatSize, Chip8DisSize, Chip8ArchReg>;
+pub type Chip8Arg = crate::bbu::ArchArg<Chip8PtrSize, Chip8DatSize, Chip8DisSize, Chip8ArchReg>;
 
 // TODO: is vec![] best here?
 fn chip8_placeholder() -> Vec<u8> {
@@ -246,9 +245,6 @@ macro_rules! make_std_nnn {
     };
 }
 
-// TODO: do they need to be pub?
-// TODO: make this accept multiple and do them all
-// TODO: evaluate whether all as's are necessary
 // TODO: would it be more space-efficient to split the formation
 //       and vec creation instructions into a function, so there's
 //       only one copy of it in the code?
@@ -289,9 +285,8 @@ macro_rules! make_std_xnn {
             fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {
                 match p {
                     0 => {
-                        self.d = crate::bbu::ArgSymbol::Data(Box::new(
-                            s.into_ptr::<Chip8DatSize, u8>(),
-                        ))
+                        self.d =
+                            crate::bbu::ArgSymbol::Data(Box::new(s.into_ptr::<Chip8DatSize, u8>()))
                     }
                     _ => panic!("c8r: unknown positional"),
                 }
@@ -381,9 +376,8 @@ macro_rules! make_std_xyn {
             fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {
                 match p {
                     0 => {
-                        self.n = crate::bbu::ArgSymbol::Data(Box::new(
-                            s.into_ptr::<Chip8DatSize, u8>(),
-                        ))
+                        self.n =
+                            crate::bbu::ArgSymbol::Data(Box::new(s.into_ptr::<Chip8DatSize, u8>()))
                     }
                     _ => panic!("c8r: unknown positional"),
                 }

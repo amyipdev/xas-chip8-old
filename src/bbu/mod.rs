@@ -102,9 +102,7 @@ pub trait ArchMacro {
 // TODO: UpperCamelCase/PascalCase these trait names
 // TODO: Document all these types
 // TODO: NOTE clean definition duplication
-pub trait PtrSize:
-    Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
-{
+pub trait PtrSize: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {
     // FIXME: transmute function
     // FIXME FIXME: native sizing?
     fn from_int<T: Integral>(a: T) -> Self;
@@ -112,16 +110,11 @@ pub trait PtrSize:
     fn add_int<T: Integral>(&mut self, a: T) -> ();
     fn add_ptr(&mut self, a: Self) -> ();
 }
-pub trait DatSize:
-    Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
-{
+pub trait DatSize: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {
     fn from_int<T: Integral>(a: T) -> Self;
     fn extract_int<T: Integral>(&self) -> T;
 }
-pub trait DisSize:
-    Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
-{
-}
+pub trait DisSize: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
 
 // NOTE NOTE NOTE
 //

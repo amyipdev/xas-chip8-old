@@ -25,7 +25,7 @@ use crate::bbu::chip8_raw;
 
 // TODO: utility, global it - readd in p
 // TODO: probably a better way than this
-fn arg_is_register(a: &Option<Vec<String>>/*, p: usize*/) -> bool {
+fn arg_is_register(a: &Option<Vec<String>> /*, p: usize*/) -> bool {
     if let Some(crate::bbu::ArchArg::Register(_)) = crate::bbu::parse_arg::<
         chip8_raw::Chip8PtrSize,
         chip8_raw::Chip8DatSize,
@@ -75,7 +75,7 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
             } else {
                 gim!(Chip8_4XNN, i)
             }
-        },
+        }
         "mov" => {
             if arg_is_register(&i.args) {
                 gim!(Chip8_8XY0, i)

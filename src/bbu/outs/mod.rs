@@ -29,8 +29,7 @@ pub type LabelTree<T> = std::collections::HashMap<String, T>;
 // TODO: fix inherent cloning issues with String
 // also, TODO: it is absolutely not necessary for these to be ordered
 // T = crate::bbu::SymConv, U = crate::bbu::PTR_SIZE
-pub type UnresSymTree<T, U> =
-    Vec<(Box<dyn crate::bbu::ArchInstruction<T>>, U)>;
+pub type UnresSymTree<T, U> = Vec<(Box<dyn crate::bbu::ArchInstruction<T>>, U)>;
 
 // TODO NOTE: utility function
 // o = offset

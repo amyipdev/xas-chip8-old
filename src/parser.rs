@@ -95,7 +95,7 @@ impl std::str::FromStr for Parser {
 
 // TODO: optimize, this is terribly inefficient
 // TODO: if keeping do-it-self, consider box or array of width 2
-fn single_split(s: String) -> (String, String) {
+fn single_split(s: &str) -> (String, String) {
     let mut flag: bool = true;
     let mut res: (String, String) = (String::new(), String::new());
     for c in s.chars() {
@@ -151,7 +151,7 @@ impl Parser {
 
         let mut a: String = match self.pop_queued() {
             Some(s) => s,
-            None => return false
+            None => return false,
         };
         // TODO: consider changing more matches to regex (do perf analysis)
         // TODO: try limiting size of regex crate if possible given the few invocations
@@ -163,7 +163,7 @@ impl Parser {
         if a == "" {
             return true;
         }
-        let b: (String, String) = single_split(a);
+        let b: (String, String) = single_split(&a);
         let mut ar: Vec<String> = vec![];
         if b.1.trim_start() != "" {
             for n in acs_from_str(&b.1) {
@@ -188,7 +188,7 @@ impl Parser {
                 }));
         } else {
             // TODO: put iterator type here
-            let mut ns = b.0.chars();
+            let mut ns: std::str::Chars = b.0.chars();
             ns.next();
             self.d.push_back(ParsedOperation::Macro(ParsedMacro {
                 mcr: ns.collect::<String>(),

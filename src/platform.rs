@@ -46,7 +46,7 @@ pub struct Platform {
 // possible. Allows passing string literals (&String = &str) and reduces call
 // changes between str and String.
 impl Platform {
-    pub fn from_platform_info(arch: String, target: String) -> Self {
+    pub fn from_platform_info(arch: &str, target: &str) -> Self {
         Platform {
             // TODO: consider using some kind of lookup table?
             arch: match arch.to_lowercase().as_str() {
@@ -59,5 +59,9 @@ impl Platform {
                 _ => panic!("unsupported target"),
             },
         }
+    }
+    pub fn from_platform_double(t: &str) -> Self {
+        let n: Vec<String> = t.split('-').map(|x| x.to_string()).collect();
+        Self::from_platform_info(&n[0], &n[1])
     }
 }
