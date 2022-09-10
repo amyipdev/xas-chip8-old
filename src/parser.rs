@@ -145,14 +145,22 @@ impl Parser {
     }
 
     pub fn parse_line(&mut self) -> bool {
-        // rust doesn't know how to read assignment context properly
-        // we need to predefine it for scoping issues... can't define as null
-        // FIXME if there's a better way to null-init a string (change to note otherwise)
-
         let mut a: String = match self.pop_queued() {
             Some(s) => s,
             None => return false,
         };
+        let mut b = a.trim_end().chars();
+        if b.next_back() == Some(':') {
+            self.d.push_back(
+                ParsedOperation::Macro(ParsedMacro {
+                    mcr: "label".to_string(),
+                    args: Some(vec![b.collect::<String>()])
+                })
+            );
+            return true;
+        } else {
+            drop(b);
+        }
         // TODO: consider changing more matches to regex (do perf analysis)
         // TODO: try limiting size of regex crate if possible given the few invocations
         // TODO FIXME FIXME avoid/get rid of regex due to speed issues

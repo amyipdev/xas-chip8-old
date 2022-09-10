@@ -254,6 +254,11 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                 // adding a flag of some kind to LexSection?
                 // TODO: better matching system if not, this needs overhaul
                 match j.mcr.to_lowercase().as_str() {
+                    "label" | "lbl" => {
+                        self.push_label();
+                        // TODO remove clone
+                        self.gen_label(j.args.unwrap()[0].clone());
+                    }
                     "section" | "sec" => {
                         self.push_section();
                         self.gen_section(j.args);
@@ -261,20 +266,20 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                     "text" | "code" => {
                         self.push_section();
                         // TODO: fix gen_section call, this is ugly asf
-                        self.gen_section(Some(vec!["text".to_string()]));
+                        self.gen_section(Some(vec![".text".to_string()]));
                     }
                     "bss" | "data?" => {
                         self.push_section();
                         // TODO: see above
-                        self.gen_section(Some(vec!["bss".to_string()]));
+                        self.gen_section(Some(vec![".bss".to_string()]));
                     }
                     "rodata" | "const" => {
                         self.push_section();
-                        self.gen_section(Some(vec!["rodata".to_string()]));
+                        self.gen_section(Some(vec![".rodata".to_string()]));
                     }
                     "data" | "dat" => {
                         self.push_section();
-                        self.gen_section(Some(vec!["data".to_string()]));
+                        self.gen_section(Some(vec![".data".to_string()]));
                     }
                     // TODO: proper error handling!!
                     // consider just ignoring the error for now
