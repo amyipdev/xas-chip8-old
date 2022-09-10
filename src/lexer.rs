@@ -98,7 +98,8 @@ impl<T: crate::bbu::SymConv> LexOperation<T> {
     }
 }
 
-pub type LexIdLabel<T: crate::bbu::SymConv> = Vec<LexOperation<T>>;
+// T in crate::bbu::SymConv
+pub type LexIdLabel<T> = Vec<LexOperation<T>>;
 
 #[derive(Debug)]
 pub struct LexLabel<T: crate::bbu::SymConv> {
@@ -308,7 +309,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                 crate::platform::PlatformArch::ChipEight => {
                     LexOperation::Instruction(crate::bbu::chip8::get_instruction::<T>(i))
                 }
-                _ => panic!("architecture not implemented yet"),
+                //_ => panic!("architecture not implemented yet"),
             };
             match j {
                 LexLabelType::Base(ref mut a) => a,

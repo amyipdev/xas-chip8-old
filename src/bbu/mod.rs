@@ -265,7 +265,7 @@ fn parse_ukr<T: Integral>(s: &str) -> Option<T> {
         return None;
     }
     let sign = if s.chars().next() == Some('-') { 1 } else { 0 };
-    let mut v: T = T::from_usize(0).unwrap();
+    let v: T;
     // TODO typehint
     let sl = &s[sign..];
     // Slices are valid still one over, and since the length is >=1, starting at 1 is fine
@@ -387,7 +387,8 @@ pub struct ArchIndivReg<V: DIS_SIZE, W: ArchReg> {
 }
 
 // TODO: consider struct, boxed struct
-type RegClauseInfo<V: DIS_SIZE, W: ArchReg> = (Option<Box<V>>, Box<W>, Option<(u8, Box<W>)>);
+// V: DIS_SIZE, W: ArchReg
+type RegClauseInfo<V, W> = (Option<Box<V>>, Box<W>, Option<(u8, Box<W>)>);
 
 // TODO better error handling, Result instead of Option
 // TODO should this be an impl on ArchArg? makes a lot more sense
@@ -465,7 +466,8 @@ fn parse_reg_clause<V: DIS_SIZE, W: ArchReg>(s: &String) -> RegClauseInfo<V, W> 
     let mut p: String = s.clone();
     if p.contains('(') {
         // item is claused, now split on the parentheses
-        let mut v: Vec<String> = p.split('(').map(|x| x.to_string()).collect();
+        // TODO: is there a better method than Vec?
+        let v: Vec<String> = p.split('(').map(|x| x.to_string()).collect();
         p = v[1].trim_end_matches(')').to_string();
         if v[0] != "" {
             disp = Some(Box::new(V::from_str(&v[0]).unwrap()));

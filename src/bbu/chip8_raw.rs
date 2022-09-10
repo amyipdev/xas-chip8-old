@@ -33,7 +33,6 @@ use std::str::FromStr;
 use crate::bbu::ArchInstruction;
 // TODO: push the shortening out throughout the file
 // TODO: and same with this:
-use crate::bbu::SymConv;
 use crate::bbu::DAT_SIZE;
 use crate::bbu::PTR_SIZE;
 
@@ -76,13 +75,14 @@ impl crate::bbu::SymConv for CHIP8_Symbol {
 
 impl<T: crate::bbu::SymConv> crate::bbu::ArchSym<T> for CHIP8_Symbol {
     fn get_uk_sym(&self) -> Option<&String> {
+        // TODO: PTR(i) | Data(i) => Some(i)?
         match &self.i {
             crate::bbu::ArgSymbol::UnknownPointer(i) => Some(i),
             crate::bbu::ArgSymbol::UnknownData(i) => Some(i),
             _ => None,
         }
     }
-    fn set_sym(&mut self, a: T) -> () {
+    fn set_sym(&mut self, _a: T) -> () {
         unimplemented!()
     }
 }
@@ -185,7 +185,7 @@ macro_rules! make_std_const {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from($offs.to_be_bytes())
             }
-            fn get_lex(a: Option<Vec<String>>) -> Self {
+            fn get_lex(_a: Option<Vec<String>>) -> Self {
                 Self {}
             }
             fn check_symbols(&self) -> bool {
@@ -197,7 +197,7 @@ macro_rules! make_std_const {
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
-            fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {}
+            fn fulfill_symbol(&mut self, _s: &T, _p: crate::bbu::SymbolPosition) -> () {}
         }
     };
 }
@@ -327,7 +327,7 @@ macro_rules! make_std_xy {
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
-            fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {}
+            fn fulfill_symbol(&mut self, _s: &T, _p: crate::bbu::SymbolPosition) -> () {}
         }
     };
 }
@@ -416,7 +416,7 @@ macro_rules! make_std_efx {
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
-            fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {}
+            fn fulfill_symbol(&mut self, _s: &T, _p: crate::bbu::SymbolPosition) -> () {}
         }
     };
 }

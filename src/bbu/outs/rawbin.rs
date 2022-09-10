@@ -63,7 +63,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
                             n.get_output_bytes()
                         }
                     }
-                    _ => panic!("rawbin: unsupported op type"),
+                    //_ => panic!("rawbin: unsupported op type"),
                 };
                 cp.add_int(b.len());
                 dest.extend(b);
@@ -111,8 +111,8 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
 // TODO: move offsets into another part of BBU maybe? probably arch pages?
 pub fn get_offset<T: crate::bbu::PTR_SIZE>(p: &crate::platform::Platform) -> T {
     match &p.arch {
-        ChipEightRaw => T::from_int(0x200),
-        ChipEight => T::from_int(0x200),
-        _ => panic!("unknown arch"),
+        crate::platform::PlatformArch::ChipEightRaw => T::from_int(0x200),
+        crate::platform::PlatformArch::ChipEight => T::from_int(0x200),
+        //_ => panic!("unknown arch"),
     }
 }

@@ -23,9 +23,9 @@
 
 use crate::bbu::chip8_raw;
 
-// TODO: utility, global it
+// TODO: utility, global it - readd in p
 // TODO: probably a better way than this
-fn arg_is_register(a: &Option<Vec<String>>, p: usize) -> bool {
+fn arg_is_register(a: &Option<Vec<String>>/*, p: usize*/) -> bool {
     if let Some(crate::bbu::ArchArg::Register(_)) = crate::bbu::parse_arg::<
         chip8_raw::CHIP8_PTR_SIZE,
         chip8_raw::CHIP8_DAT_SIZE,
@@ -47,6 +47,8 @@ macro_rules! gim {
     }};
 }
 
+// TODO: macro for generating arg_is_register sets,
+// there's a lot of code duplication here
 pub fn get_instruction<T: crate::bbu::SymConv>(
     i: crate::parser::ParsedInstruction,
 ) -> Box<dyn crate::bbu::ArchInstruction<T>> {
@@ -61,28 +63,28 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
         // getting out of panicking and into proper error handling
         // this is the Correct Robust Way(TM)
         "je" => {
-            if arg_is_register(&i.args, 0) {
+            if arg_is_register(&i.args) {
                 gim!(Chip8_5XY0, i)
             } else {
                 gim!(Chip8_3XNN, i)
             }
         }
         "jne" => {
-            if arg_is_register(&i.args, 0) {
+            if arg_is_register(&i.args) {
                 gim!(Chip8_9XY0, i)
             } else {
                 gim!(Chip8_4XNN, i)
             }
         },
         "mov" => {
-            if arg_is_register(&i.args, 0) {
+            if arg_is_register(&i.args) {
                 gim!(Chip8_8XY0, i)
             } else {
                 gim!(Chip8_6XNN, i)
             }
         }
         "add" => {
-            if arg_is_register(&i.args, 0) {
+            if arg_is_register(&i.args) {
                 gim!(Chip8_8XY4, i)
             } else {
                 gim!(Chip8_7XNN, i)

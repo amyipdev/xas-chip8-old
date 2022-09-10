@@ -149,12 +149,10 @@ impl Parser {
         // we need to predefine it for scoping issues... can't define as null
         // FIXME if there's a better way to null-init a string (change to note otherwise)
 
-        let mut a: String = String::new();
-        if let Some(s) = self.pop_queued() {
-            a = s;
-        } else {
-            return false;
-        }
+        let mut a: String = match self.pop_queued() {
+            Some(s) => s,
+            None => return false
+        };
         // TODO: consider changing more matches to regex (do perf analysis)
         // TODO: try limiting size of regex crate if possible given the few invocations
         // TODO FIXME FIXME avoid/get rid of regex due to speed issues

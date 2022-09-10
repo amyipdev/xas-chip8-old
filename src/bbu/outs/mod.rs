@@ -23,11 +23,13 @@
 
 pub mod rawbin;
 
-pub type LabelTree<T: crate::bbu::SymConv> = std::collections::HashMap<String, T>;
+// T = crate::bbu::SymConv
+pub type LabelTree<T> = std::collections::HashMap<String, T>;
 
 // TODO: fix inherent cloning issues with String
 // also, TODO: it is absolutely not necessary for these to be ordered
-pub type UnresSymTree<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE> =
+// T = crate::bbu::SymConv, U = crate::bbu::PTR_SIZE
+pub type UnresSymTree<T, U> =
     Vec<(Box<dyn crate::bbu::ArchInstruction<T>>, U)>;
 
 // TODO NOTE: utility function
@@ -49,6 +51,6 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
     // TODO generate this with macros
     (match plat.target {
         crate::platform::PlatformTarget::RawBinary => rawbin::run_output::<T, U>,
-        _ => panic!("unsupported combination"),
+        //_ => panic!("unsupported combination"),
     })(src, dest, plat);
 }

@@ -67,7 +67,7 @@ pub fn assemble_full_source_gen<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>
     p: &crate::platform::Platform,
 ) -> Vec<u8> {
     let mut l: crate::lexer::Lexer<T> = crate::lexer::Lexer::from_vdq(s, p.clone());
-    l.lex_full_queue();
+    l.lex_full_queue().expect("temporary error handling");
     let mut r: Vec<u8> = Vec::new();
     crate::bbu::outs::run_output::<T, U>(l.pop_vdq(), &mut r, p);
     r
