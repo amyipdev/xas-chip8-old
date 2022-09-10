@@ -42,7 +42,7 @@ pub fn vec_update(s: &Vec<u8>, d: &mut Vec<u8>, o: usize) -> () {
     }
 }
 
-pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
+pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
     src: Vec<crate::lexer::LexSection<T>>,
     dest: &mut Vec<u8>,
     plat: &crate::platform::Platform,

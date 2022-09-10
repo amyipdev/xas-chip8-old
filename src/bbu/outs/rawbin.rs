@@ -23,7 +23,7 @@
 
 // TODO: proj global, utilize burns (fn FNNAME(self), which drops the object)
 
-pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
+pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
     src: Vec<crate::lexer::LexSection<T>>,
     // TODO: since dest needs to be empty for symbols to work,
     // consider just returning the Vec... or, better yet, manually clearing it!
@@ -109,7 +109,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
 }
 
 // TODO: move offsets into another part of BBU maybe? probably arch pages?
-pub fn get_offset<T: crate::bbu::PTR_SIZE>(p: &crate::platform::Platform) -> T {
+pub fn get_offset<T: crate::bbu::PtrSize>(p: &crate::platform::Platform) -> T {
     match &p.arch {
         crate::platform::PlatformArch::ChipEightRaw => T::from_int(0x200),
         crate::platform::PlatformArch::ChipEight => T::from_int(0x200),

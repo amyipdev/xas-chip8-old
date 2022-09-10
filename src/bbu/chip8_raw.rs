@@ -22,6 +22,7 @@
  */
 
 // TODO: Code organization and cleanup
+// FIXME: too many issues wrt unnecessary symbol names/expansion, needs (gbl) cleanup
 
 use std::str::FromStr;
 
@@ -33,47 +34,47 @@ use std::str::FromStr;
 use crate::bbu::ArchInstruction;
 // TODO: push the shortening out throughout the file
 // TODO: and same with this:
-use crate::bbu::DAT_SIZE;
-use crate::bbu::PTR_SIZE;
+use crate::bbu::DatSize;
+use crate::bbu::PtrSize;
 
-pub type CHIP8_DAT_SIZE = crate::bbu::GenScal<u8>;
+pub type Chip8DatSize = crate::bbu::GenScal<u8>;
 // TODO: generic displacement size for types without one
 // (@u8 for size)
-pub type CHIP8_DIS_SIZE = crate::bbu::GenScal<u8>;
-pub type CHIP8_PTR_SIZE = crate::bbu::Gen12;
+pub type Chip8DisSize = crate::bbu::GenScal<u8>;
+pub type Chip8PtrSize = crate::bbu::Gen12;
 
-pub type CHIP8_SymAlias = crate::bbu::ArgSymbol<CHIP8_PTR_SIZE, CHIP8_DAT_SIZE>;
+pub type Chip8SymAlias = crate::bbu::ArgSymbol<Chip8PtrSize, Chip8DatSize>;
 
 //pub type CHIP8_Symbol = crate::bbu::ArgSymbol<CHIP8_PTR_SIZE, CHIP8_DAT_SIZE>;
-pub struct CHIP8_Symbol {
-    pub i: CHIP8_SymAlias,
+pub struct Chip8Symbol {
+    pub i: Chip8SymAlias,
 }
 
 // TODO: make this, other parts of ArgSymbol construction a macro
-impl crate::bbu::SymConv for CHIP8_Symbol {
+impl crate::bbu::SymConv for Chip8Symbol {
     // FIXME FIXME FIXME: into_ptr, into_dat
-    fn from_ptr<T: crate::bbu::PTR_SIZE>(a: T) -> Self {
+    fn from_ptr<T: crate::bbu::PtrSize>(a: T) -> Self {
         Self {
-            i: crate::bbu::ArgSymbol::Pointer(Box::new(<CHIP8_PTR_SIZE as PTR_SIZE>::from_int::<
+            i: crate::bbu::ArgSymbol::Pointer(Box::new(<Chip8PtrSize as PtrSize>::from_int::<
                 u16,
             >(a.extract_int::<u16>()))),
         }
     }
-    fn from_dat<T: crate::bbu::DAT_SIZE>(a: T) -> Self {
+    fn from_dat<T: crate::bbu::DatSize>(a: T) -> Self {
         Self {
-            i: crate::bbu::ArgSymbol::Data(Box::new(<CHIP8_DAT_SIZE as DAT_SIZE>::from_int::<u8>(
+            i: crate::bbu::ArgSymbol::Data(Box::new(<Chip8DatSize as DatSize>::from_int::<u8>(
                 a.extract_int::<u8>(),
             ))),
         }
     }
-    fn into_ptr<T: crate::bbu::PTR_SIZE, E: crate::bbu::Integral>(&self) -> T {
-        T::from_int(crate::bbu::PTR_SIZE::extract_int::<E>(
+    fn into_ptr<T: crate::bbu::PtrSize, E: crate::bbu::Integral>(&self) -> T {
+        T::from_int(crate::bbu::PtrSize::extract_int::<E>(
             &**self.i.unwrap_ptr().unwrap(),
         ))
     }
 }
 
-impl<T: crate::bbu::SymConv> crate::bbu::ArchSym<T> for CHIP8_Symbol {
+impl<T: crate::bbu::SymConv> crate::bbu::ArchSym<T> for Chip8Symbol {
     fn get_uk_sym(&self) -> Option<&String> {
         // TODO: PTR(i) | Data(i) => Some(i)?
         match &self.i {
@@ -89,7 +90,7 @@ impl<T: crate::bbu::SymConv> crate::bbu::ArchSym<T> for CHIP8_Symbol {
 
 macro_rules! gim {
     ($n:ident,$i:ident) => {{
-        Box::new(<$n as ArchInstruction<CHIP8_Symbol>>::get_lex($i.args))
+        Box::new(<$n as ArchInstruction<Chip8Symbol>>::get_lex($i.args))
     }};
 }
 
@@ -138,11 +139,11 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
 }
 
 #[derive(Copy, Clone)]
-pub struct CHIP8_ArchReg {
+pub struct Chip8ArchReg {
     n: u8,
 }
 
-impl FromStr for CHIP8_ArchReg {
+impl FromStr for Chip8ArchReg {
     type Err = std::num::ParseIntError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() > 3 || s.len() < 2 {
@@ -150,7 +151,7 @@ impl FromStr for CHIP8_ArchReg {
         } else {
             // TODO: FIXME TODO ensure full UTF-8 compatibility crossproj
             let a: char = s.chars().nth(2).unwrap();
-            Ok(CHIP8_ArchReg {
+            Ok(Chip8ArchReg {
                 n: char::to_digit(
                     if a == 'v' {
                         s.chars().nth(3).unwrap()
@@ -165,10 +166,10 @@ impl FromStr for CHIP8_ArchReg {
     }
 }
 
-impl crate::bbu::ArchReg for CHIP8_ArchReg {}
+impl crate::bbu::ArchReg for Chip8ArchReg {}
 
-pub type CHIP8_Arg =
-    crate::bbu::ArchArg<CHIP8_PTR_SIZE, CHIP8_DAT_SIZE, CHIP8_DIS_SIZE, CHIP8_ArchReg>;
+pub type Chip8Arg =
+    crate::bbu::ArchArg<Chip8PtrSize, Chip8DatSize, Chip8DisSize, Chip8ArchReg>;
 
 // TODO: is vec![] best here?
 fn chip8_placeholder() -> Vec<u8> {
@@ -206,7 +207,7 @@ macro_rules! make_std_nnn {
     ($nm:ident,$offs:expr) => {
         #[derive(Clone)]
         pub struct $nm {
-            addr: CHIP8_SymAlias,
+            addr: Chip8SymAlias,
         }
         impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
@@ -235,7 +236,7 @@ macro_rules! make_std_nnn {
                 match p {
                     0 => {
                         self.addr = crate::bbu::ArgSymbol::Pointer(Box::new(
-                            s.into_ptr::<CHIP8_PTR_SIZE, u16>(),
+                            s.into_ptr::<Chip8PtrSize, u16>(),
                         ))
                     }
                     _ => panic!("c8r: unknown positional"),
@@ -256,8 +257,8 @@ macro_rules! make_std_xnn {
     ($nm:ident,$offs:expr) => {
         #[derive(Clone)]
         pub struct $nm {
-            x: CHIP8_ArchReg,
-            d: CHIP8_SymAlias,
+            x: Chip8ArchReg,
+            d: Chip8SymAlias,
         }
         impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
@@ -267,7 +268,7 @@ macro_rules! make_std_xnn {
                 )
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
-                let b: (CHIP8_ArchReg, CHIP8_SymAlias) = get_xnn(a);
+                let b: (Chip8ArchReg, Chip8SymAlias) = get_xnn(a);
                 Self { x: b.0, d: b.1 }
             }
             fn check_symbols(&self) -> bool {
@@ -289,7 +290,7 @@ macro_rules! make_std_xnn {
                 match p {
                     0 => {
                         self.d = crate::bbu::ArgSymbol::Data(Box::new(
-                            s.into_ptr::<CHIP8_DAT_SIZE, u8>(),
+                            s.into_ptr::<Chip8DatSize, u8>(),
                         ))
                     }
                     _ => panic!("c8r: unknown positional"),
@@ -304,8 +305,8 @@ macro_rules! make_std_xy {
     ($nm:ident,$offs:expr) => {
         #[derive(Clone)]
         pub struct $nm {
-            s: CHIP8_ArchReg,
-            d: CHIP8_ArchReg,
+            s: Chip8ArchReg,
+            d: Chip8ArchReg,
         }
         impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
@@ -314,7 +315,7 @@ macro_rules! make_std_xy {
                 )
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
-                let b: (CHIP8_ArchReg, CHIP8_ArchReg) = get_xy(a);
+                let b: (Chip8ArchReg, Chip8ArchReg) = get_xy(a);
                 Self { s: b.0, d: b.1 }
             }
             // implementation is the same as for make_std_const
@@ -339,9 +340,9 @@ macro_rules! make_std_xyn {
         // TODO: in the future, let's stray away from needing Copy and Clone
         #[derive(Clone)]
         pub struct $nm {
-            n: CHIP8_SymAlias,
-            x: CHIP8_ArchReg,
-            y: CHIP8_ArchReg,
+            n: Chip8SymAlias,
+            x: Chip8ArchReg,
+            y: Chip8ArchReg,
         }
         impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
@@ -355,7 +356,7 @@ macro_rules! make_std_xyn {
                 )
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
-                let b: (CHIP8_SymAlias, CHIP8_ArchReg, CHIP8_ArchReg) = get_xyn(a);
+                let b: (Chip8SymAlias, Chip8ArchReg, Chip8ArchReg) = get_xyn(a);
                 Self {
                     n: b.0,
                     x: b.1,
@@ -381,7 +382,7 @@ macro_rules! make_std_xyn {
                 match p {
                     0 => {
                         self.n = crate::bbu::ArgSymbol::Data(Box::new(
-                            s.into_ptr::<CHIP8_DAT_SIZE, u8>(),
+                            s.into_ptr::<Chip8DatSize, u8>(),
                         ))
                     }
                     _ => panic!("c8r: unknown positional"),
@@ -397,7 +398,7 @@ macro_rules! make_std_efx {
     ($nm:ident,$offs:expr) => {
         #[derive(Clone)]
         pub struct $nm {
-            x: CHIP8_ArchReg,
+            x: Chip8ArchReg,
         }
         impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
@@ -458,12 +459,12 @@ make_std_efx!(Chip8_FX55, 0xf055u16);
 make_std_efx!(Chip8_FX65, 0xf065u16);
 
 // TODO condense similarly to get_xnn
-fn get_nnn(a: Option<Vec<String>>) -> CHIP8_SymAlias {
+fn get_nnn(a: Option<Vec<String>>) -> Chip8SymAlias {
     if let Some(ref i) = a {
         if i.len() != 1 {
             panic!("c8r: wrong arg count")
         }
-        let b: CHIP8_Arg = crate::bbu::parse_arg(&a.unwrap()[0]).unwrap();
+        let b: Chip8Arg = crate::bbu::parse_arg(&a.unwrap()[0]).unwrap();
         // TODO: avoid this clone in the future
         b.unwrap_memory().unwrap().v.clone()
     } else {
@@ -473,16 +474,16 @@ fn get_nnn(a: Option<Vec<String>>) -> CHIP8_SymAlias {
 
 // this logic structure is repeated a lot
 // TODO consider condensing it somehow
-fn get_xnn(a: Option<Vec<String>>) -> (CHIP8_ArchReg, CHIP8_SymAlias) {
+fn get_xnn(a: Option<Vec<String>>) -> (Chip8ArchReg, Chip8SymAlias) {
     if let Some(ref i) = a {
         if i.len() != 2 {
             panic!("c8r: not enough args")
         }
         // TODO: move these directly in
         // data
-        let b: CHIP8_Arg = crate::bbu::parse_arg(&a.as_ref().unwrap()[0]).unwrap();
+        let b: Chip8Arg = crate::bbu::parse_arg(&a.as_ref().unwrap()[0]).unwrap();
         // register X
-        let c: CHIP8_Arg = crate::bbu::parse_arg(&a.as_ref().unwrap()[1]).unwrap();
+        let c: Chip8Arg = crate::bbu::parse_arg(&a.as_ref().unwrap()[1]).unwrap();
         (
             *c.unwrap_register().unwrap().reg,
             // TODO: also avoid this clone
@@ -494,12 +495,12 @@ fn get_xnn(a: Option<Vec<String>>) -> (CHIP8_ArchReg, CHIP8_SymAlias) {
 }
 
 // NOTE: is tuple the best option here? Would an array be better?
-fn get_xy(a: Option<Vec<String>>) -> (CHIP8_ArchReg, CHIP8_ArchReg) {
+fn get_xy(a: Option<Vec<String>>) -> (Chip8ArchReg, Chip8ArchReg) {
     //if let Some(ref i) = a {
     //    if i.len() != 2 {
     //        panic!("c8r: not enough args")
     //    }
-    let b: Vec<CHIP8_Arg> = argcheck(&a, 2);
+    let b: Vec<Chip8Arg> = argcheck(&a, 2);
     (
         *b[0].unwrap_register().unwrap().reg,
         *b[1].unwrap_register().unwrap().reg,
@@ -510,8 +511,8 @@ fn get_xy(a: Option<Vec<String>>) -> (CHIP8_ArchReg, CHIP8_ArchReg) {
 }
 
 // res.0 limited to 4 bits
-fn get_xyn(a: Option<Vec<String>>) -> (CHIP8_SymAlias, CHIP8_ArchReg, CHIP8_ArchReg) {
-    let b: Vec<CHIP8_Arg> = argcheck(&a, 3);
+fn get_xyn(a: Option<Vec<String>>) -> (Chip8SymAlias, Chip8ArchReg, Chip8ArchReg) {
+    let b: Vec<Chip8Arg> = argcheck(&a, 3);
     (
         // TODO FIXME: get rid of the clones!!
         b[0].unwrap_direct().unwrap().clone(),
@@ -520,15 +521,15 @@ fn get_xyn(a: Option<Vec<String>>) -> (CHIP8_SymAlias, CHIP8_ArchReg, CHIP8_Arch
     )
 }
 
-fn get_efx(a: Option<Vec<String>>) -> CHIP8_ArchReg {
-    let b: Vec<CHIP8_Arg> = argcheck(&a, 1);
+fn get_efx(a: Option<Vec<String>>) -> Chip8ArchReg {
+    let b: Vec<Chip8Arg> = argcheck(&a, 1);
     *b[0].unwrap_register().unwrap().reg
 }
 
 // TODO: make this a utility public function
 // TODO: better error handling (log)
 // TODO: dedup panic message
-fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<CHIP8_Arg> {
+fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<Chip8Arg> {
     if let Some(ref b) = a {
         if b.len() != i {
             panic!("argument check failed")

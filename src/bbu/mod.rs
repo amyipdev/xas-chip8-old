@@ -63,9 +63,9 @@ pub type SymbolPosition = u8;
 pub type UnresSymInfo<'a> = (&'a String, SymbolPosition);
 
 pub trait SymConv {
-    fn from_ptr<T: PTR_SIZE>(a: T) -> Self;
-    fn from_dat<T: DAT_SIZE>(a: T) -> Self;
-    fn into_ptr<T: PTR_SIZE, E: Integral>(&self) -> T;
+    fn from_ptr<T: PtrSize>(a: T) -> Self;
+    fn from_dat<T: DatSize>(a: T) -> Self;
+    fn into_ptr<T: PtrSize, E: Integral>(&self) -> T;
 }
 
 pub trait ArchSym<T: SymConv> {
@@ -102,7 +102,7 @@ pub trait ArchMacro {
 // TODO: UpperCamelCase/PascalCase these trait names
 // TODO: Document all these types
 // TODO: NOTE clean definition duplication
-pub trait PTR_SIZE:
+pub trait PtrSize:
     Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
 {
     // FIXME: transmute function
@@ -112,13 +112,13 @@ pub trait PTR_SIZE:
     fn add_int<T: Integral>(&mut self, a: T) -> ();
     fn add_ptr(&mut self, a: Self) -> ();
 }
-pub trait DAT_SIZE:
+pub trait DatSize:
     Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
 {
     fn from_int<T: Integral>(a: T) -> Self;
     fn extract_int<T: Integral>(&self) -> T;
 }
-pub trait DIS_SIZE:
+pub trait DisSize:
     Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized
 {
 }
@@ -170,7 +170,7 @@ impl<T: Integral> std::str::FromStr for GenScal<T> {
 }
 
 // TODO: reduce code dup
-impl<T: Integral> PTR_SIZE for GenScal<T> {
+impl<T: Integral> PtrSize for GenScal<T> {
     fn from_int<E: Integral>(a: E) -> Self {
         Self {
             i: num_traits::cast::cast(a).unwrap(),
@@ -186,7 +186,7 @@ impl<T: Integral> PTR_SIZE for GenScal<T> {
         self.i += a.i
     }
 }
-impl<T: Integral> DAT_SIZE for GenScal<T> {
+impl<T: Integral> DatSize for GenScal<T> {
     fn from_int<E: Integral>(a: E) -> Self {
         Self {
             i: num_traits::cast::cast(a).unwrap(),
@@ -196,7 +196,7 @@ impl<T: Integral> DAT_SIZE for GenScal<T> {
         num_traits::cast::cast(self.i).unwrap()
     }
 }
-impl<T: Integral> DIS_SIZE for GenScal<T> {}
+impl<T: Integral> DisSize for GenScal<T> {}
 
 // TODO: macro for these odd-ball types
 #[derive(Copy, Clone)]
@@ -214,7 +214,7 @@ impl std::str::FromStr for Gen12 {
 }
 
 // TODO minimize code dup
-impl PTR_SIZE for Gen12 {
+impl PtrSize for Gen12 {
     fn from_int<E: Integral>(a: E) -> Self {
         Self {
             i: num_traits::cast::cast::<E, u16>(a).unwrap() & 0xfffu16,
@@ -233,7 +233,7 @@ impl PTR_SIZE for Gen12 {
         self.i &= 0xfff;
     }
 }
-impl DAT_SIZE for Gen12 {
+impl DatSize for Gen12 {
     fn from_int<E: Integral>(a: E) -> Self {
         Self {
             i: num_traits::cast::cast::<E, u16>(a).unwrap() | 0xfffu16,
@@ -243,7 +243,7 @@ impl DAT_SIZE for Gen12 {
         num_traits::cast::cast(self.i).unwrap()
     }
 }
-impl DIS_SIZE for Gen12 {}
+impl DisSize for Gen12 {}
 
 //pub struct Dat12
 
@@ -290,7 +290,7 @@ fn parse_ukr<T: Integral>(s: &str) -> Option<T> {
 pub trait ArchReg: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
 
 #[derive(Clone)]
-pub enum ArgSymbol<T: PTR_SIZE, U: DAT_SIZE> {
+pub enum ArgSymbol<T: PtrSize, U: DatSize> {
     UnknownPointer(String),
     UnknownData(String),
     Pointer(Box<T>),
@@ -298,7 +298,7 @@ pub enum ArgSymbol<T: PTR_SIZE, U: DAT_SIZE> {
 }
 
 // condense these unwrapper functions TODO
-impl<T: PTR_SIZE, U: DAT_SIZE> ArgSymbol<T, U> {
+impl<T: PtrSize, U: DatSize> ArgSymbol<T, U> {
     pub fn unwrap_unknown_ptr(&self) -> Option<&String> {
         if let ArgSymbol::UnknownPointer(n) = self {
             return Some(n);
@@ -333,7 +333,7 @@ impl<T: PTR_SIZE, U: DAT_SIZE> ArgSymbol<T, U> {
 }
 
 // TODO: Box all structs? NOTE-FIXME
-pub enum ArchArg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg> {
+pub enum ArchArg<T: PtrSize, U: DatSize, V: DisSize, W: ArchReg> {
     // limited to Unknown or Data
     Direct(ArgSymbol<T, U>),
     // limited to Unknown or Pointer
@@ -342,7 +342,7 @@ pub enum ArchArg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg> {
     Register(ArchIndivReg<V, W>),
 }
 
-impl<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg> ArchArg<T, U, V, W> {
+impl<T: PtrSize, U: DatSize, V: DisSize, W: ArchReg> ArchArg<T, U, V, W> {
     pub fn unwrap_direct(&self) -> Option<&ArgSymbol<T, U>> {
         if let ArchArg::Direct(n) = self {
             return Some(n);
@@ -368,14 +368,14 @@ impl<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg> ArchArg<T, U, V, W> {
     }
 }
 
-pub struct ArchMem<T: PTR_SIZE, U: DAT_SIZE, W: ArchReg> {
+pub struct ArchMem<T: PtrSize, U: DatSize, W: ArchReg> {
     // segment register
     pub segr: Option<Box<W>>,
     // actual memory value, must be Unknown or Pointer
     pub v: ArgSymbol<T, U>,
 }
 
-pub struct ArchIndivReg<V: DIS_SIZE, W: ArchReg> {
+pub struct ArchIndivReg<V: DisSize, W: ArchReg> {
     // segment register
     pub segr: Option<Box<W>>,
     // offset; if register is dereferenced, Some(0)
@@ -394,7 +394,7 @@ type RegClauseInfo<V, W> = (Option<Box<V>>, Box<W>, Option<(u8, Box<W>)>);
 // TODO should this be an impl on ArchArg? makes a lot more sense
 // TODO FIXME return here and do major cleanup
 // TODO FIXME FIXME FIXME FIXME this should be a FromStr off ArchArg once error handling is correct
-pub fn parse_arg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg>(
+pub fn parse_arg<T: PtrSize, U: DatSize, V: DisSize, W: ArchReg>(
     s: &String,
 ) -> Option<ArchArg<T, U, V, W>> {
     // Detect the presence of a segment register
@@ -445,7 +445,7 @@ pub fn parse_arg<T: PTR_SIZE, U: DAT_SIZE, V: DIS_SIZE, W: ArchReg>(
     }
 }
 
-fn get_direct_value<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
+fn get_direct_value<T: PtrSize, U: DatSize>(s: &String) -> ArgSymbol<T, U> {
     // presume string already has `$` stripped
     // TODO: octal support with 0o
     // TODO: check for full dozenal support
@@ -460,7 +460,7 @@ fn get_direct_value<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
 // for very large files would see heavy acceleration
 // also, NOTE CFI support, whatever the hell it is
 
-fn parse_reg_clause<V: DIS_SIZE, W: ArchReg>(s: &String) -> RegClauseInfo<V, W> {
+fn parse_reg_clause<V: DisSize, W: ArchReg>(s: &String) -> RegClauseInfo<V, W> {
     // First determine if there's an internal clause, there must be to even have a displacement
     let mut disp: Option<Box<V>> = None;
     let mut p: String = s.clone();
@@ -493,7 +493,7 @@ fn parse_reg_clause<V: DIS_SIZE, W: ArchReg>(s: &String) -> RegClauseInfo<V, W> 
     (disp, reg, shift)
 }
 
-fn extract_mem_symbol<T: PTR_SIZE, U: DAT_SIZE>(s: &String) -> ArgSymbol<T, U> {
+fn extract_mem_symbol<T: PtrSize, U: DatSize>(s: &String) -> ArgSymbol<T, U> {
     let ns: String = trim_parentheses(s);
     // NOTE bell technically requires that if the dollar sign is in parentheses, accept it as valid
     // we ignore that for now, but it's a future consideration

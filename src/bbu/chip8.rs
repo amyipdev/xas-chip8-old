@@ -27,10 +27,10 @@ use crate::bbu::chip8_raw;
 // TODO: probably a better way than this
 fn arg_is_register(a: &Option<Vec<String>>/*, p: usize*/) -> bool {
     if let Some(crate::bbu::ArchArg::Register(_)) = crate::bbu::parse_arg::<
-        chip8_raw::CHIP8_PTR_SIZE,
-        chip8_raw::CHIP8_DAT_SIZE,
-        chip8_raw::CHIP8_DIS_SIZE,
-        chip8_raw::CHIP8_ArchReg,
+        chip8_raw::Chip8PtrSize,
+        chip8_raw::Chip8DatSize,
+        chip8_raw::Chip8DisSize,
+        chip8_raw::Chip8ArchReg,
     >(&a.as_ref().unwrap()[0])
     {
         true
@@ -42,7 +42,7 @@ fn arg_is_register(a: &Option<Vec<String>>/*, p: usize*/) -> bool {
 macro_rules! gim {
     ($n:ident,$i:ident) => {{
         Box::new(<chip8_raw::$n as crate::bbu::ArchInstruction<
-            chip8_raw::CHIP8_Symbol,
+            chip8_raw::Chip8Symbol,
         >>::get_lex($i.args))
     }};
 }

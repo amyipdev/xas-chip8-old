@@ -54,15 +54,15 @@ pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec
     (match pl.arch {
         crate::platform::PlatformArch::ChipEightRaw | crate::platform::PlatformArch::ChipEight => {
             assemble_full_source_gen::<
-                crate::bbu::chip8_raw::CHIP8_Symbol,
-                crate::bbu::chip8_raw::CHIP8_PTR_SIZE,
+                crate::bbu::chip8_raw::Chip8Symbol,
+                crate::bbu::chip8_raw::Chip8PtrSize,
             >
         }
     })(p.pop_vdq(), pl)
 }
 
 // naturally handles lexer-onwards
-pub fn assemble_full_source_gen<T: crate::bbu::SymConv, U: crate::bbu::PTR_SIZE>(
+pub fn assemble_full_source_gen<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
     s: std::collections::VecDeque<crate::parser::ParsedOperation>,
     p: &crate::platform::Platform,
 ) -> Vec<u8> {
