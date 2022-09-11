@@ -70,12 +70,19 @@ libxas is licensed under the GNU General Public License, version 2 (or, at your 
 chosen to ensure user freedom while also guaranteeing derivations are available to the entire community.
 
 We also use the following libraries, which have their own respective licenses:
-* Regex (soon to be removed): v1.6.0, **MIT** and/or Apache-2.0
+* log: v0.4.17, **MIT** and/or Apache-2.0
 * num_traits: v0.2.15, **MIT** and/or Apache-2.0
 
 ### Usage 
 
-TBD - for now, look at the implementations of EAF
+If you're looking to use individual parts of the stack, check their (TBD) documentation. 
+Otherwise, you're probably looking for how to use EAF.
+
+1. Make your Cargo project and add `libxas` as a dependency.
+2. Store your assembly in a `String`. If you're working with files, use `std::fs::read_to_string` or something similar.
+3. Create a `platform::Platform` instance using one of the creation functions.
+4. Call `eaf::assemble_full_source` with your assembly and `Platform`.
+5. Read/store the resulting `Vec<u8>` as your output.
 
 ### Contributions 
 
@@ -87,3 +94,9 @@ Contributions are always welcome, and very much appreciated. You can:
 ### Compatibility
 
 TODO (MSRV)
+
+### Architecture Support 
+
+|        | chip8-raw          | chip8              |
+|--------|--------------------|--------------------|
+| rawbin | :white_check_mark: | :white_check_mark: |
