@@ -28,23 +28,13 @@ use std::str::FromStr;
 // (or Extendible Assembler Frontend)
 // (or Extendible Assembler interFace)
 
-// NOTE: the following comments are archived comments which may or may not be applicable.
-// if they are not, please remove them. however, they were kept during initial file cleanup.
-
 // TODO: function with automatic platform detection
-// TODO: function to easily take a compiler combo (chip8-bin) and generate Platform
 
 // TODO: provide more options for inputs (files maybe? put them behind features??)
-// TODO: reexport in top-level lib.rs for ease-of-use (look into how to do this
-// properly - function wrapping sounds unfun)
+// TODO: reexport in top-level lib.rs for ease-of-use (look into how to do this properly)
 
 // TODO: this is a library, so good error handling is a must
 // need to get rid of ?s and .unwrap()s, and return a Result
-// NOTE: this function should either be distributed out into a baseline function
-// called "assemble", or be treated as the baseline function itself
-// as it takes in a flexible &str (TODO: consider moving to u8 input? might be bad)
-// and returns Vec<u8>, which is the most flexible of all - and doesn't generate
-// any data/configuration on its own
 
 // Parser is type-neutral, but everything from then on isn't...
 pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec<u8> {
@@ -74,10 +64,8 @@ pub fn assemble_full_source_gen<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
 }
 
 // Copied TODOs from main:
-// - TODO: instead of manual .next(), consider .skip(1) or else
-// - TODO: put cloning responsibilities on the callee, not the caller, whenever ownership doesn't need to be taken
-// - TODO: once again, we might want to pass &String to allow for mutability! clone if needed
-// -       thought: wait, does &String not allow &str/&'static str?
+// - TODO: have callee clone, or better yet, avoid cloning at all... see below
+// - TODO: migrate as much as possible to &String or &str depending on context (not in structs)
 // - TODO: pass as many things by reference as possible... question is, is it better to take ownership
 //         (guaranteed only shows once) or limit function parameter transfer (faster, risks 2x:1 leak)
 //         if going with more pass-by-reference, more memory usage auditing needs to be done
