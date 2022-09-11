@@ -21,6 +21,8 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
+use crate::errors::lpanic;
+
 // TODO: Code organization and cleanup
 // FIXME: too many issues wrt unnecessary symbol names/expansion, needs (gbl) cleanup
 
@@ -134,7 +136,7 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
         "fx33" => gim!(Chip8_FX33, i),
         "fx55" => gim!(Chip8_FX55, i),
         "fx65" => gim!(Chip8_FX65, i),
-        _ => panic!("unknown instruction error"),
+        _ => lpanic("unknown instruction error"),
     }
 }
 
@@ -147,7 +149,7 @@ impl FromStr for Chip8ArchReg {
     type Err = std::num::ParseIntError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() > 3 || s.len() < 2 {
-            panic!("chip8_raw: unknown register")
+            lpanic("chip8_raw: unknown register")
         } else {
             // NOTE: consider full UTF-8 support
             let a: char = s.chars().nth(2).unwrap();
@@ -238,7 +240,7 @@ macro_rules! make_std_nnn {
                             s.into_ptr::<Chip8PtrSize, u16>(),
                         ))
                     }
-                    _ => panic!("c8r: unknown positional"),
+                    _ => lpanic("c8r: unknown positional"),
                 }
             }
         }
@@ -288,7 +290,7 @@ macro_rules! make_std_xnn {
                         self.d =
                             crate::bbu::ArgSymbol::Data(Box::new(s.into_ptr::<Chip8DatSize, u8>()))
                     }
-                    _ => panic!("c8r: unknown positional"),
+                    _ => lpanic("c8r: unknown positional"),
                 }
             }
         }
@@ -379,7 +381,7 @@ macro_rules! make_std_xyn {
                         self.n =
                             crate::bbu::ArgSymbol::Data(Box::new(s.into_ptr::<Chip8DatSize, u8>()))
                     }
-                    _ => panic!("c8r: unknown positional"),
+                    _ => lpanic("c8r: unknown positional"),
                 }
             }
         }
@@ -456,13 +458,13 @@ make_std_efx!(Chip8_FX65, 0xf065u16);
 fn get_nnn(a: Option<Vec<String>>) -> Chip8SymAlias {
     if let Some(ref i) = a {
         if i.len() != 1 {
-            panic!("c8r: wrong arg count")
+            lpanic("c8r: wrong arg count")
         }
         let b: Chip8Arg = crate::bbu::parse_arg(&a.unwrap()[0]).unwrap();
         // TODO: avoid this clone in the future
         b.unwrap_memory().unwrap().v.clone()
     } else {
-        panic!("c8r: not enough args")
+        lpanic("c8r: not enough args")
     }
 }
 
@@ -471,7 +473,7 @@ fn get_nnn(a: Option<Vec<String>>) -> Chip8SymAlias {
 fn get_xnn(a: Option<Vec<String>>) -> (Chip8ArchReg, Chip8SymAlias) {
     if let Some(ref i) = a {
         if i.len() != 2 {
-            panic!("c8r: not enough args")
+            lpanic("c8r: not enough args")
         }
         // TODO: move these directly in
         // data
@@ -484,7 +486,7 @@ fn get_xnn(a: Option<Vec<String>>) -> (Chip8ArchReg, Chip8SymAlias) {
             b.unwrap_direct().unwrap().clone(),
         )
     } else {
-        panic!("c8r: not enough args")
+        lpanic("c8r: not enough args")
     }
 }
 
@@ -526,12 +528,12 @@ fn get_efx(a: Option<Vec<String>>) -> Chip8ArchReg {
 fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<Chip8Arg> {
     if let Some(ref b) = a {
         if b.len() != i {
-            panic!("argument check failed")
+            lpanic("argument check failed")
         } else {
             Vec::from_iter(b.into_iter().map(|x| crate::bbu::parse_arg(&x).unwrap()))
         }
     } else {
-        panic!("argument check failed")
+        lpanic("argument check failed")
     }
 }
 

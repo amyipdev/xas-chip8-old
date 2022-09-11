@@ -22,6 +22,8 @@ build = false
 
 [dependencies]
 num-traits = "0.2.15"
+log = "0.4.17"
+colored = "2.0.0"
 
 [lib]
 name = "libxas"

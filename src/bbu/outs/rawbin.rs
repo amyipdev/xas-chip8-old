@@ -21,6 +21,8 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
+use crate::errors::lpanic;
+
 // TODO: proj global, utilize burns (fn FNNAME(self), which drops the object)
 
 pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
@@ -94,7 +96,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
                 // (through values on its enum varient) TODO should accept an option to
                 // create a symbol resolution file, listing symbols and their positions.
                 // This also leads to the need to TODO override offsets.
-                panic!("rawbin: unresolvable symbol")
+                lpanic("rawbin: unresolvable symbol")
             }
         }
         // now that the previous for is complete, the immutable reference is dropped

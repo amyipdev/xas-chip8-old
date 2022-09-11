@@ -21,6 +21,8 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
+use crate::errors::lpanic;
+
 #[derive(Clone, Debug)]
 pub enum PlatformArch {
     ChipEightRaw,
@@ -52,11 +54,11 @@ impl Platform {
             arch: match arch.to_lowercase().as_str() {
                 "chipeightraw" | "chip8-raw" | "c8r" | "chip8r" => PlatformArch::ChipEightRaw,
                 "chipeight" | "chip8" | "c8" | "chip-8" => PlatformArch::ChipEight,
-                _ => panic!("unsupported arch"),
+                _ => lpanic("unsupported arch"),
             },
             target: match target.to_lowercase().as_str() {
                 "bin" | "binary" | "raw" | "rawbin" | "rawbinary" => PlatformTarget::RawBinary,
-                _ => panic!("unsupported target"),
+                _ => lpanic("unsupported target"),
             },
         }
     }

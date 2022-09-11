@@ -54,6 +54,8 @@
 // TODO: generic argument types (direct, label, memory, register, etc)
 // TODO: general symbol implementation
 
+use crate::errors::lpanic;
+
 pub mod chip8;
 pub mod chip8_raw;
 pub mod outs;
@@ -245,7 +247,7 @@ impl DisSize for Gen12 {}
 fn uw_aid<T, E>(r: Result<T, E>) -> T {
     match r {
         Ok(a) => a,
-        Err(_) => panic!("unwrapping failed"),
+        Err(_) => lpanic("unwrapping failed"),
     }
 }
 

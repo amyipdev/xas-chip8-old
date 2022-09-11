@@ -31,17 +31,16 @@
 // TODO: use cargo-msrv to determine minimum rust version
 // TODO: proper logging via interface w/ log crate (use all 5 levels)
 //       - consider hiding behind a feature
-// TODO: when doing readme, set up badges (don't forget codecov)
 // TODO: benchmarks, tests, examples
 // TODO: migrate TODOs to GitHub issues/milestones
 // TODO: documentation + other repo setup
-// TODO: set github to default to rebasing instead of merges
 // TODO: consider fully migrating to GitLab, or as an ecosystem
-// TODO: proper gitignore, don't keep garbage like Cargo.lock
 // TODO: what the hell is going on with binary sizing?
 // TODO: GH Pages? Whatever, something representing the library needs setup for crates
 
 use std::collections::VecDeque;
+
+use crate::errors::lpanic;
 
 // TODO: replace all (project-wide) lookup tables with static strings
 // that go to enums with https://github.com/rust-phf/rust-phf
@@ -190,7 +189,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
     fn gen_section(&mut self, name: Option<Vec<String>>) -> () {
         if let Some(mut n) = name {
             if n.len() == 0 {
-                panic!("improper arg amount passed");
+                lpanic("improper arg amount passed");
             }
             // create new section
             self.cs = Some(LexSection {
@@ -202,7 +201,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
             // generate identity label
             self.cl = Some(LexLabelType::Base(vec![]));
         } else {
-            panic!("improper arg amount passed");
+            lpanic("improper arg amount passed");
         }
     }
 
@@ -285,7 +284,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                     // consider just ignoring the error for now
                     // and continuing on
                     // also could be solved with logging issues
-                    _ => panic!(),
+                    _ => lpanic("lexer: unknown macro"),
                 }
             // TODO: find better solution that else-if-let since it's guaranteed to end up here
             } else if let crate::parser::ParsedOperation::Instruction(j) = i {

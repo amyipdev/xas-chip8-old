@@ -22,6 +22,7 @@
  */
 
 use crate::bbu::chip8_raw;
+use crate::errors::lpanic;
 
 // TODO: utility, global it - readd in p
 // TODO: probably a better way than this
@@ -111,6 +112,6 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
         "bcd" => gim!(Chip8_FX33, i),
         "dmp" => gim!(Chip8_FX55, i),
         "lod" => gim!(Chip8_FX65, i),
-        _ => panic!("unknown instruction error"),
+        _ => lpanic("unknown instruction error"),
     }
 }

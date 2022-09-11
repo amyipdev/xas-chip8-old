@@ -21,12 +21,20 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
-extern crate num_traits;
-extern crate log;
+use log::error;
+// TODO; consider colorizing output
 
-pub mod bbu;
-pub mod eaf;
-pub mod lexer;
-pub mod parser;
-pub mod platform;
-pub mod errors;
+static mut LOGGING_HINT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn hint_logged() -> () {
+    unsafe {LOGGING_HINT.store(true, std::sync::atomic::Ordering::Relaxed)};
+}
+
+pub fn lpanic(s: &str) -> ! {
+    if unsafe {LOGGING_HINT.load(std::sync::atomic::Ordering::Relaxed)} {
+        error!("libxas: error: {}", s);
+    } else {
+        println!("libxas: nolog: E: {}", s);
+    }
+    std::process::exit(127i32);
+}
