@@ -27,11 +27,11 @@ use log::error;
 static mut LOGGING_HINT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 pub fn hint_logged() -> () {
-    unsafe {LOGGING_HINT.store(true, std::sync::atomic::Ordering::Relaxed)};
+    unsafe { LOGGING_HINT.store(true, std::sync::atomic::Ordering::Relaxed) };
 }
 
 pub fn lpanic(s: &str) -> ! {
-    if unsafe {LOGGING_HINT.load(std::sync::atomic::Ordering::Relaxed)} {
+    if unsafe { LOGGING_HINT.load(std::sync::atomic::Ordering::Relaxed) } {
         error!("libxas: error: {}", s);
     } else {
         println!("libxas: nolog: E: {}", s);

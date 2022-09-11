@@ -21,12 +21,12 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
-extern crate num_traits;
 extern crate log;
+extern crate num_traits;
 
 pub mod bbu;
 pub mod eaf;
+pub mod errors;
 pub mod lexer;
 pub mod parser;
 pub mod platform;
-pub mod errors;

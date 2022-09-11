@@ -151,12 +151,10 @@ impl Parser {
         };
         let mut b = a.trim_end().chars();
         if b.next_back() == Some(':') {
-            self.d.push_back(
-                ParsedOperation::Macro(ParsedMacro {
-                    mcr: "label".to_string(),
-                    args: Some(vec![b.collect::<String>()])
-                })
-            );
+            self.d.push_back(ParsedOperation::Macro(ParsedMacro {
+                mcr: "label".to_string(),
+                args: Some(vec![b.collect::<String>()]),
+            }));
             return true;
         } else {
             drop(b);
@@ -260,5 +258,11 @@ fn acs_from_str(s: &str) -> impl Iterator<Item = String> + '_ {
 }
 
 fn split_comments(s: &str) -> String {
-    s.split("//").next().unwrap().split(';').next().unwrap().to_string()
+    s.split("//")
+        .next()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string()
 }
