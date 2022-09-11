@@ -161,12 +161,7 @@ impl Parser {
         } else {
             drop(b);
         }
-        // TODO: consider changing more matches to regex (do perf analysis)
-        // TODO: try limiting size of regex crate if possible given the few invocations
-        // TODO FIXME FIXME avoid/get rid of regex due to speed issues
-        let re: regex::Regex = regex::Regex::new(r"//|;").unwrap();
-        // TODO: investigate removing unwrap somehow, what happens here? can it panic?
-        a = re.split(a.trim_start()).next().unwrap().to_string();
+        a = split_comments(a.trim_start());
         // skip empty lines
         if a == "" {
             return true;
@@ -257,9 +252,13 @@ impl Iterator for ArgCommaSplitter<'_> {
 }
 
 // TODO: make project FromStr trait, maybe in utilities?
-pub fn acs_from_str(s: &str) -> impl Iterator<Item = String> + '_ {
+fn acs_from_str(s: &str) -> impl Iterator<Item = String> + '_ {
     ArgCommaSplitter {
         p: false,
         c: s.bytes().peekable(),
     }
+}
+
+fn split_comments(s: &str) -> String {
+    s.split("//").next().unwrap().split(';').next().unwrap().to_string()
 }

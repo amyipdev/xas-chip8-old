@@ -22,7 +22,6 @@
  */
 
 extern crate num_traits;
-extern crate regex;
 
 pub mod bbu;
 pub mod eaf;
