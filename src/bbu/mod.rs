@@ -508,3 +508,39 @@ fn extract_mem_symbol<T: PtrSize, U: DatSize>(s: &String) -> ArgSymbol<T, U> {
 fn trim_parentheses(s: &String) -> String {
     s.trim_start_matches('(').trim_end_matches(')').to_string()
 }
+
+macro_rules! be_mcr {
+    ($nm:ident,$u:ty) => {
+        pub struct $nm {
+            x: $u
+        }
+        impl ArchMacro for $nm {
+            fn get_output_bytes(&self) -> Vec<$u> {
+                Vec::from(self.x.to_be_bytes())
+            }
+            fn get_lex(a: Option<Vec<String>>) -> Self {
+                Self { x: a.unwrap()[0].parse().unwrap() }
+            }
+        }
+    }
+}
+
+macro_rules! le_mcr {
+    ($nm:ident,$u:ty) => {
+        pub struct $nm {
+            x: $u
+        }
+        impl ArchMacro for $nm {
+            fn get_output_bytes(&self) -> Vec<$u> {
+                Vec::from(self.x.to_le_bytes())
+            }
+            fn get_lex(a: Option<Vec<String>>) -> Self {
+                // TODO; dedup
+                Self { x: a.unwrap()[0].parse().unwrap() }
+            }
+        }
+    }
+}
+
+be_mcr!(BigByte, u8);
+//be_mcr!(BigWord, u16);

@@ -34,6 +34,8 @@ use std::str::FromStr;
 // TODO: better error handling
 // TODO: reduce repetition of this
 use crate::bbu::ArchInstruction;
+use crate::bbu::ArchMacro;
+
 // TODO: push the shortening out throughout the file
 // TODO: and same with this:
 use crate::bbu::DatSize;
@@ -531,4 +533,26 @@ fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<Chip8Arg> {
     }
 }
 
+// TODO genericize for LE, BE
+struct Chip8Byte {
+    n: u8
+}
+
 // TODO FIXME NOTE: throw warnings when number is truncated!
+
+macro_rules! gmm {
+    ($n:ident,$i:ident) => {{
+        Box::new(<crate::bbu::$n as ArchMacro>::get_lex($i.args))
+    }}
+}
+
+// TODO: consider putting these in lexer maybe? idk
+// TODO FIXME: add symbols to macros
+pub fn get_macro(
+    i: crate::parser::ParsedMacro,
+) -> Box<dyn ArchMacro> {
+    match i.mcr.to_lowercase().as_str() {
+        "byte" => gmm!(BigByte, i),
+        _ => lpanic("macro not supported")
+    }
+}

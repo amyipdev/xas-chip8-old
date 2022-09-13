@@ -253,6 +253,9 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                 // adding a flag of some kind to LexSection?
                 // TODO: better matching system if not, this needs overhaul
                 match j.mcr.to_lowercase().as_str() {
+                    "byte" => {
+                        self.push_macro(j);
+                    }
                     "label" | "lbl" => {
                         self.push_label();
                         // TODO remove clone
@@ -294,6 +297,22 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
         }
         self.push_section();
         Ok(())
+    }
+
+    // TODO: code dup with push_instruction
+    fn push_macro(&mut self, i: crate::parser::ParsedMacro) {
+        if let Some(ref mut j) = &mut self.cl {
+            let op: LexOperation<T> = match self.p.arch {
+                crate::platform::PlatformArch::ChipEightRaw => {
+                    LexOperation::Macro(crate::bbu::chip8_raw::get_macro(i))
+                }
+                _ => panic!("not implemented yet")
+            };
+            match j {
+                LexLabelType::Base(ref mut a) => a,
+                LexLabelType::Std(ref mut b) => &mut b.ops,
+            }.push(op);
+        }
     }
 
     // TODO: error handling

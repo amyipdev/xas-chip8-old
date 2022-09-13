@@ -24,6 +24,8 @@
 use crate::bbu::chip8_raw;
 use crate::errors::lpanic;
 
+use crate::bbu::ArchMacro;
+
 // TODO: utility, global it - readd in p
 // TODO: probably a better way than this
 fn arg_is_register(a: &Option<Vec<String>> /*, p: usize*/) -> bool {
@@ -114,4 +116,10 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
         "lod" => gim!(Chip8_FX65, i),
         _ => lpanic("unknown instruction error"),
     }
+}
+
+pub fn get_macro(
+    i: crate::parser::ParsedMacro
+) -> Box<dyn ArchMacro> {
+    chip8_raw::get_macro(i)
 }

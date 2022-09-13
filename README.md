@@ -93,7 +93,7 @@ Contributions are always welcome, and very much appreciated. You can:
 
 ### Compatibility
 
-TODO (MSRV)
+libxas requires Rust stable >= v1.56.1 or a fairly recent nightly. This is because we use Rust Edition 2021. You could attempt to change the Rust version to 2018 and run on a lower version, but this is NOT SUPPORTED.
 
 ### Architecture Support 
 
