@@ -66,4 +66,12 @@ impl Platform {
         let n: Vec<String> = t.split('-').map(|x| x.to_string()).collect();
         Self::from_platform_info(&n[0], &n[1])
     }
+    // True = little, False = big
+    pub fn get_endianness(&self) -> bool {
+        match self.arch {
+            PlatformArch::ChipEight => false,
+            PlatformArch::ChipEightRaw => false,
+            // _ => lpanic("unsupported arch")
+        }
+    }
 }
