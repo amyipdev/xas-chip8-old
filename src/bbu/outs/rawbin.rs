@@ -96,7 +96,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
                 // (through values on its enum varient) TODO should accept an option to
                 // create a symbol resolution file, listing symbols and their positions.
                 // This also leads to the need to TODO override offsets.
-                lpanic("rawbin: unresolvable symbol")
+                lpanic(&format!("rawbin: unresolvable symbol: {}", s.0))
             }
         }
         // now that the previous for is complete, the immutable reference is dropped

@@ -52,8 +52,8 @@ impl Platform {
         Platform {
             // TODO: consider using some kind of lookup table?
             arch: match arch.to_lowercase().as_str() {
-                "chipeightraw" | "chip8-raw" | "c8r" | "chip8r" => PlatformArch::ChipEightRaw,
-                "chipeight" | "chip8" | "c8" | "chip-8" => PlatformArch::ChipEight,
+                "chipeightraw" | "chip8raw" | "c8r" | "chip8r" => PlatformArch::ChipEightRaw,
+                "chipeight" | "chip8" | "c8" | "chip8" => PlatformArch::ChipEight,
                 _ => lpanic("unsupported arch"),
             },
             target: match target.to_lowercase().as_str() {

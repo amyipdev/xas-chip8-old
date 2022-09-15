@@ -444,7 +444,8 @@ fn get_direct_value<T: PtrSize, U: DatSize>(s: &String) -> ArgSymbol<T, U> {
     // presume string already has `$` stripped
     // TODO: octal support with 0o
     // TODO: check for full dozenal support
-    if s.chars().all(|x| (x.is_numeric() || "-xbd".contains(x))) {
+    // NOTE: document that this restricts labels to beginning with letters
+    if s.chars().next().unwrap().is_numeric() {
         return ArgSymbol::Data(Box::new(U::from_str(s).unwrap()));
     } else {
         return ArgSymbol::UnknownData(s.clone());
@@ -519,7 +520,7 @@ macro_rules! be_mcr {
                 Vec::from(self.x.to_be_bytes())
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
-                Self { x: a.unwrap()[0].parse().unwrap() }
+                Self { x: parse_ukr(&a.unwrap()[0]).unwrap() }
             }
         }
     }
@@ -536,7 +537,7 @@ macro_rules! le_mcr {
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 // TODO; dedup
-                Self { x: a.unwrap()[0].parse().unwrap() }
+                Self { x: parse_ukr(&a.unwrap()[0]).unwrap() }
             }
         }
     }

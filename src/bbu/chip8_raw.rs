@@ -450,6 +450,7 @@ make_std_efx!(Chip8_FX33, 0xf033u16);
 make_std_efx!(Chip8_FX55, 0xf055u16);
 make_std_efx!(Chip8_FX65, 0xf065u16);
 
+// FIXME: switch to argcheck
 // TODO condense similarly to get_xnn
 fn get_nnn(a: Option<Vec<String>>) -> Chip8SymAlias {
     if let Some(ref i) = a {
@@ -467,6 +468,13 @@ fn get_nnn(a: Option<Vec<String>>) -> Chip8SymAlias {
 // this logic structure is repeated a lot
 // TODO consider condensing it somehow
 fn get_xnn(a: Option<Vec<String>>) -> (Chip8ArchReg, Chip8SymAlias) {
+    let b: Vec<Chip8Arg> = argcheck(&a, 2);
+    (
+            *b[1].unwrap_register().unwrap().reg,
+            // TODO: also avoid this clone
+            b[0].unwrap_direct().unwrap().clone(),
+    )
+    /*
     if let Some(ref i) = a {
         if i.len() != 2 {
             lpanic("c8r: not enough args")
@@ -483,7 +491,7 @@ fn get_xnn(a: Option<Vec<String>>) -> (Chip8ArchReg, Chip8SymAlias) {
         )
     } else {
         lpanic("c8r: not enough args")
-    }
+    }*/
 }
 
 // NOTE: is tuple the best option here? Would an array be better?

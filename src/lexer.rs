@@ -306,6 +306,9 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                 crate::platform::PlatformArch::ChipEightRaw => {
                     LexOperation::Macro(crate::bbu::chip8_raw::get_macro(i))
                 }
+                crate::platform::PlatformArch::ChipEight => {
+                    LexOperation::Macro(crate::bbu::chip8::get_macro(i))
+                }
                 _ => panic!("not implemented yet")
             };
             match j {
