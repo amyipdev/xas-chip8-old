@@ -542,9 +542,6 @@ fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<Chip8Arg> {
 }
 
 // TODO genericize for LE, BE
-struct Chip8Byte {
-    n: u8
-}
 
 // TODO FIXME NOTE: throw warnings when number is truncated!
 
