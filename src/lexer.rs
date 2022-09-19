@@ -66,7 +66,7 @@ use crate::errors::lpanic;
 // type from platform.
 
 pub enum LexOperation<T: crate::bbu::SymConv> {
-    Instruction(Box<dyn crate::bbu::ArchInstruction<T>>),
+    Instruction(Box<dyn crate::bbu::ArchMcrInst<T>>),
     Macro(Box<dyn crate::bbu::ArchMacro>),
 }
 
@@ -74,7 +74,7 @@ impl<T: crate::bbu::SymConv> std::fmt::Debug for LexOperation<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             LexOperation::Instruction(ref i) => {
-                write!(f, "ArchInstruction: {:02x?}", i.get_output_bytes())
+                write!(f, "ArchMcrInst: {:02x?}", i.get_output_bytes())
             }
             LexOperation::Macro(ref j) => write!(f, "ArchMacro: {:02x?}", j.get_output_bytes()),
         }
