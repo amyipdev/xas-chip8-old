@@ -179,6 +179,9 @@ fn chip8_placeholder() -> Vec<u8> {
     vec![0u8, 0u8]
 }
 
+// TODO: review of public vs pub(crate) vs private api
+const CHIP8_INSTR_LEN: u8 = 2u8;
+
 // lots of code duplication with get_output_bytes TODO FIXME NOTE, somen with get_lex
 
 macro_rules! make_std_const {
@@ -197,6 +200,7 @@ macro_rules! make_std_const {
             fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
                 None
             }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {CHIP8_INSTR_LEN}
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
@@ -230,6 +234,7 @@ macro_rules! make_std_nnn {
                 };
                 r
             }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {CHIP8_INSTR_LEN}
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
@@ -280,6 +285,7 @@ macro_rules! make_std_xnn {
                     _ => None,
                 }
             }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {CHIP8_INSTR_LEN}
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
@@ -320,6 +326,7 @@ macro_rules! make_std_xy {
             fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
                 None
             }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {CHIP8_INSTR_LEN}
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
@@ -369,6 +376,7 @@ macro_rules! make_std_xyn {
                     _ => None,
                 }
             }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {CHIP8_INSTR_LEN}
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }
@@ -406,6 +414,7 @@ macro_rules! make_std_efx {
             fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
                 None
             }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {CHIP8_INSTR_LEN}
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
             }

@@ -80,6 +80,11 @@ pub trait ArchInstruction<T: SymConv> {
     fn get_output_bytes(&self) -> Vec<u8>;
     fn check_symbols(&self) -> bool;
     fn get_symbols(&self) -> Option<Vec<UnresSymInfo>>;
+    fn get_length(&self) -> SymbolPosition;
+    // TODO: deprecate? (general project cleaning/deprecation)
+    // TODO: feature `no-deprecated`, removes all deprecated code
+    // TODO: feature `no-log`, removes logging
+    // NOTE: maybe do the same for colored logging?
     fn get_placeholder(&self) -> Vec<u8>;
     // NOTE: should this return Result<>? Shouldn't be able to fail...
     fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> ();

@@ -25,6 +25,7 @@ use crate::errors::lpanic;
 
 // TODO: proj global, utilize burns (fn FNNAME(self), which drops the object)
 
+/*
 pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
     src: Vec<crate::lexer::LexSection<T>>,
     // TODO: since dest needs to be empty for symbols to work,
@@ -107,13 +108,87 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
         // all the symbols are now fulfilled, so use the helper to insert the instr in
         crate::bbu::outs::vec_update(&i.0.get_output_bytes(), dest, np);
     }
+}*/
+
+// todo drop
+// TODO: featurize
+// TODO: no-std
+
+// TODO: make OptionLeaf a globally available concept
+enum OptionLeaf<T: crate::bbu::SymConv> {
+    Constant(Vec<u8>),
+    Symbol(Box<dyn crate::bbu::ArchInstruction<T>>)
 }
 
+type VecOptTree<T> = Vec<OptionLeaf<T>>;
+
 // TODO: move offsets into another part of BBU maybe? probably arch pages?
-pub fn get_offset<T: crate::bbu::PtrSize>(p: &crate::platform::Platform) -> T {
+// TODO: const fn somehow
+fn get_offset<T: crate::bbu::PtrSize>(p: &crate::platform::Platform) -> T {
     match &p.arch {
         crate::platform::PlatformArch::ChipEightRaw => T::from_int(0x200),
         crate::platform::PlatformArch::ChipEight => T::from_int(0x200),
         //_ => panic!("unknown arch"),
     }
+}
+
+pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
+    src: Vec<crate::lexer::LexSection<T>>,
+    // TODO: since dest needs to be empty for symbols to work,
+    // consider just returning the Vec... or, better yet, manually clearing it!
+    // to deal with overhead, I think Vec is just a pointer...
+    dest: &mut Vec<u8>,
+    plat: &crate::platform::Platform,
+) -> () {
+    let offs: U = get_offset(plat);
+    let mut cp: U = U::from_int::<usize>(0usize);
+    let mut lt: crate::bbu::outs::LabelTree<T> = crate::bbu::outs::LabelTree::new();
+    let mut dt: VecOptTree<T> = Vec::new();
+
+    for section in src {
+        for label in section.labels {
+            // TODO: support non-label symbols (constants, computed constants)
+            let label_parts: (crate::lexer::LexIdLabel<T>, Option<String>) = label.extract();
+            if let Some(n) = label_parts.1 {
+                let mut np: U = cp.clone();
+                // TODO: support referencing out to data
+                np.add_ptr(offs);
+                lt.insert(n.clone(), T::from_ptr(np));
+            }
+            for op in label_parts.0 {
+                let b = match op {
+                    // macros will be dead soon anyways
+                    //crate::lexer::LexOperation::Macro(m) => {dt.push(OptionLeaf::Constant(m.get_output_bytes())); },
+                    crate::lexer::LexOperation::Instruction(n) => {
+                        let l = n.get_length(); // pre-save before move
+                        if !n.check_symbols() {
+                            // TODO: lazy-load bytes to save copy penalty
+                            dt.push(OptionLeaf::Constant(n.get_output_bytes()));
+                        } else {
+                            dt.push(OptionLeaf::Symbol(n))
+                        }
+                        l
+                    }
+                    _ => lpanic("unsupported op type")
+                };
+                cp.add_int(b);
+            }
+        }
+    }
+/*
+    for i in dt.into_iter() {
+        let mut symresv: Vec<(&T, u8)> = Vec::new();
+        match i {
+            OptionLeaf::Constant(n) => ,
+            OptionLeaf::Symbol(m) => {
+                for s in m.get_symbols().unwrap() {
+                    if lt.contains_key(s.0) {
+                        symresv.push((&lt[s.0], s.1));
+                    } else {
+                        lpanic(&format!("rawbin: unresolvable symbol: {}", s.0))
+                    }
+                }
+            }
+        }
+    }*/
 }
