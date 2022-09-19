@@ -33,7 +33,7 @@ use std::str::FromStr;
 
 // TODO: better error handling
 // TODO: reduce repetition of this
-use crate::bbu::ArchInstruction;
+use crate::bbu::ArchMcrInst;
 use crate::bbu::ArchMacro;
 
 // TODO: push the shortening out throughout the file
@@ -94,13 +94,13 @@ impl<T: crate::bbu::SymConv> crate::bbu::ArchSym<T> for Chip8Symbol {
 
 macro_rules! gim {
     ($n:ident,$i:ident) => {{
-        Box::new(<$n as ArchInstruction<Chip8Symbol>>::get_lex($i.args))
+        Box::new(<$n as ArchMcrInst<Chip8Symbol>>::get_lex($i.args))
     }};
 }
 
 pub fn get_instruction<T: crate::bbu::SymConv>(
     i: crate::parser::ParsedInstruction,
-) -> Box<dyn ArchInstruction<T>> {
+) -> Box<dyn ArchMcrInst<T>> {
     match i.instr.to_lowercase().as_str() {
         // TODO: reduce code dup, tie into the macros beforehand??
         "0nnn" => gim!(Chip8_0NNN, i),
@@ -184,7 +184,7 @@ fn chip8_placeholder() -> Vec<u8> {
 macro_rules! make_std_const {
     ($nm:ident,$offs:expr) => {
         pub struct $nm {}
-        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
+        impl<T: crate::bbu::SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from($offs.to_be_bytes())
             }
@@ -210,7 +210,7 @@ macro_rules! make_std_nnn {
         pub struct $nm {
             addr: Chip8SymAlias,
         }
-        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
+        impl<T: crate::bbu::SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from(($offs | self.addr.unwrap_ptr().unwrap().i).to_be_bytes())
             }
@@ -257,7 +257,7 @@ macro_rules! make_std_xnn {
             x: Chip8ArchReg,
             d: Chip8SymAlias,
         }
-        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
+        impl<T: crate::bbu::SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from(
                     ($offs | ((self.x.n as u16) << 8) | (self.d.unwrap_data().unwrap().i as u16))
@@ -303,7 +303,7 @@ macro_rules! make_std_xy {
             s: Chip8ArchReg,
             d: Chip8ArchReg,
         }
-        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
+        impl<T: crate::bbu::SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from(
                     ($offs | ((self.d.n as u16) << 8) | ((self.s.n as u16) << 4)).to_be_bytes(),
@@ -338,7 +338,7 @@ macro_rules! make_std_xyn {
             x: Chip8ArchReg,
             y: Chip8ArchReg,
         }
-        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
+        impl<T: crate::bbu::SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 // TODO: warn on overflow
                 Vec::from(
@@ -392,7 +392,7 @@ macro_rules! make_std_efx {
         pub struct $nm {
             x: Chip8ArchReg,
         }
-        impl<T: crate::bbu::SymConv> ArchInstruction<T> for $nm {
+        impl<T: crate::bbu::SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from(($offs | ((self.x.n as u16) << 8)).to_be_bytes())
             }
