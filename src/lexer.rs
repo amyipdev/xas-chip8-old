@@ -308,13 +308,13 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                 }
                 crate::platform::PlatformArch::ChipEight => {
                     LexOperation::Macro(crate::bbu::chip8::get_macro(i))
-                }
-                // _ => panic!("not implemented yet")
+                } // _ => panic!("not implemented yet")
             };
             match j {
                 LexLabelType::Base(ref mut a) => a,
                 LexLabelType::Std(ref mut b) => &mut b.ops,
-            }.push(op);
+            }
+            .push(op);
         }
     }
 

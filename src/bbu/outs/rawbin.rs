@@ -117,7 +117,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
 // TODO: make OptionLeaf a globally available concept
 enum OptionLeaf<T: crate::bbu::SymConv> {
     Constant(Vec<u8>),
-    Symbol(Box<dyn crate::bbu::ArchInstruction<T>>)
+    Symbol(Box<dyn crate::bbu::ArchInstruction<T>>),
 }
 
 type VecOptTree<T> = Vec<OptionLeaf<T>>;
@@ -158,7 +158,11 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
             for op in label_parts.0 {
                 let b = match op {
                     // macros will be dead soon anyways
-                    //crate::lexer::LexOperation::Macro(m) => {dt.push(OptionLeaf::Constant(m.get_output_bytes())); },
+                    crate::lexer::LexOperation::Macro(m) => {
+                        let l = m.get_length();
+                        dt.push(OptionLeaf::Constant(m.get_output_bytes()));
+                        l
+                    }
                     crate::lexer::LexOperation::Instruction(n) => {
                         let l = n.get_length(); // pre-save before move
                         if !n.check_symbols() {
@@ -169,26 +173,26 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
                         }
                         l
                     }
-                    _ => lpanic("unsupported op type")
+                    //_ => lpanic("unsupported op type"),
                 };
                 cp.add_int(b);
             }
         }
     }
-/*
-    for i in dt.into_iter() {
-        let mut symresv: Vec<(&T, u8)> = Vec::new();
+
+    for i in dt {
         match i {
-            OptionLeaf::Constant(n) => ,
-            OptionLeaf::Symbol(m) => {
+            OptionLeaf::Constant(n) => dest.extend(n),
+            OptionLeaf::Symbol(mut m) => {
                 for s in m.get_symbols().unwrap() {
-                    if lt.contains_key(s.0) {
-                        symresv.push((&lt[s.0], s.1));
+                    if lt.contains_key(&*s.0) {
+                        m.fulfill_symbol(&lt[&*s.0], s.1);
                     } else {
                         lpanic(&format!("rawbin: unresolvable symbol: {}", s.0))
                     }
                 }
+                dest.extend(m.get_output_bytes());
             }
         }
-    }*/
+    }
 }
