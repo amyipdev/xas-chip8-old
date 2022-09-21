@@ -41,14 +41,16 @@ pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec
     let mut p: crate::parser::Parser = crate::parser::Parser::from_str(src).unwrap();
     p.parse_all();
     // if only rust could return types from matches...
-    (match pl.arch {
+    match pl.arch {
+        #[cfg(feature = "chip8-raw")]
         crate::platform::PlatformArch::ChipEightRaw | crate::platform::PlatformArch::ChipEight => {
             assemble_full_source_gen::<
                 crate::bbu::chip8_raw::Chip8Symbol,
                 crate::bbu::chip8_raw::Chip8PtrSize,
-            >
+            >(p.pop_vdq(), pl)
         }
-    })(p.pop_vdq(), pl)
+        //_ => panic!("unknown arch")
+    }
 }
 
 // naturally handles lexer-onwards

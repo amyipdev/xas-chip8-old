@@ -52,11 +52,12 @@
 //       ties into license declaration perhaps
 
 // TODO: generic argument types (direct, label, memory, register, etc)
-// TODO: general symbol implementation
 
 use crate::errors::lpanic;
 
+#[cfg(feature = "chip8")]
 pub mod chip8;
+#[cfg(feature = "chip8-raw")]
 pub mod chip8_raw;
 pub mod outs;
 
