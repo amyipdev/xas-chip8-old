@@ -21,6 +21,7 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
+#[cfg(feature = "rawbin")]
 pub mod rawbin;
 
 // T = crate::bbu::SymConv
@@ -48,8 +49,9 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
 ) -> () {
     // each combination could need something different, so each is explicit
     // TODO generate this with macros
-    (match plat.target {
-        crate::platform::PlatformTarget::RawBinary => rawbin::run_output::<T, U>,
+    match plat.target {
+        #[cfg(feature = "rawbin")]
+        crate::platform::PlatformTarget::RawBinary => rawbin::run_output::<T, U>(src, dest, plat),
         //_ => panic!("unsupported combination"),
-    })(src, dest, plat);
+    }
 }

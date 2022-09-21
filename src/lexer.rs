@@ -303,13 +303,15 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
     fn push_macro(&mut self, i: crate::parser::ParsedMacro) {
         if let Some(ref mut j) = &mut self.cl {
             let op: LexOperation<T> = match self.p.arch {
+                #[cfg(feature = "chip8-raw")]
                 crate::platform::PlatformArch::ChipEightRaw => {
                     LexOperation::Macro(crate::bbu::chip8_raw::get_macro(i))
                 }
+                #[cfg(feature = "chip8")]
                 crate::platform::PlatformArch::ChipEight => {
                     LexOperation::Macro(crate::bbu::chip8::get_macro(i))
                 }
-                // _ => panic!("not implemented yet")
+                //_ => panic!("not implemented yet")
             };
             match j {
                 LexLabelType::Base(ref mut a) => a,
@@ -329,12 +331,15 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
             // FIXME consider removing it in cleanup
             // TODO: move this responsibility over to BBU global thanks to ArchArg
             let op: LexOperation<T> = match self.p.arch {
+                #[cfg(feature = "chip8-raw")]
                 crate::platform::PlatformArch::ChipEightRaw => {
                     LexOperation::Instruction(crate::bbu::chip8_raw::get_instruction::<T>(i))
                 }
+                #[cfg(feature = "chip8")]
                 crate::platform::PlatformArch::ChipEight => {
                     LexOperation::Instruction(crate::bbu::chip8::get_instruction::<T>(i))
-                } //_ => panic!("architecture not implemented yet"),
+                }
+                //_ => panic!("architecture not implemented yet"),
             };
             match j {
                 LexLabelType::Base(ref mut a) => a,

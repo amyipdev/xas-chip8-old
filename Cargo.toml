@@ -30,3 +30,9 @@ path = "src/lib.rs"
 
 [badges]
 maintenance = { status = "actively-developed" }
+
+[features]
+default = ["rawbin", "chip8", "chip8-raw"]
+rawbin = []
+chip8-raw = []
+chip8 = ["chip8-raw"]
