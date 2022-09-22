@@ -131,7 +131,7 @@ fn get_offset<T: crate::bbu::PtrSize>(p: &crate::platform::Platform) -> T {
         crate::platform::PlatformArch::ChipEightRaw => T::from_int(0x200),
         #[cfg(feature = "chip8")]
         crate::platform::PlatformArch::ChipEight => T::from_int(0x200),
-        _ => panic!("unknown arch"),
+        _ => lpanic("rawbin: unknown arch"),
     }
 }
 
