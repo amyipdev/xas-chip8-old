@@ -117,7 +117,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
 // TODO: make OptionLeaf a globally available concept
 enum OptionLeaf<T: crate::bbu::SymConv> {
     Constant(Vec<u8>),
-    Symbol(Box<dyn crate::bbu::ArchInstruction<T>>),
+    Symbol(Box<dyn crate::bbu::ArchMcrInst<T>>),
 }
 
 type VecOptTree<T> = Vec<OptionLeaf<T>>;
