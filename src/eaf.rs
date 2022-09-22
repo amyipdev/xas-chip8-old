@@ -40,6 +40,7 @@ use std::str::FromStr;
 pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec<u8> {
     let mut p: crate::parser::Parser = crate::parser::Parser::from_str(src).unwrap();
     p.parse_all();
+    log::trace!("eaf: parser stage completed, assembling file");
     // if only rust could return types from matches...
     match pl.arch {
         #[cfg(feature = "chip8-raw")]
