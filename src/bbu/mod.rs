@@ -63,7 +63,7 @@ pub mod outs;
 
 pub type SymbolPosition = u8;
 
-pub type UnresSymInfo<'a> = (RcSym, SymbolPosition);
+pub type USIWrap = Option<Vec<(RcSym, SymbolPosition)>>;
 
 pub trait SymConv {
     fn from_ptr<T: PtrSize>(a: T) -> Self;
@@ -80,7 +80,7 @@ pub trait ArchSym<T: SymConv> {
 pub trait ArchMcrInst<T: SymConv> {
     fn get_output_bytes(&self) -> Vec<u8>;
     fn check_symbols(&self) -> bool;
-    fn get_symbols(&self) -> Option<Vec<UnresSymInfo>>;
+    fn get_symbols(&self) -> USIWrap;
     fn get_length(&self) -> SymbolPosition;
     // TODO: deprecate? (general project cleaning/deprecation)
     // TODO: feature `no-deprecated`, removes all deprecated code

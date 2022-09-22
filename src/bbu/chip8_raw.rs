@@ -200,7 +200,7 @@ macro_rules! make_std_const {
                 false
             }
             // TODO: replace tuple with UnresSymInfo
-            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> crate::bbu::USIWrap {
                 None
             }
             fn get_length(&self) -> crate::bbu::SymbolPosition {
@@ -232,7 +232,7 @@ macro_rules! make_std_nnn {
                     _ => false,
                 }
             }
-            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> crate::bbu::USIWrap {
                 let r = match self.addr {
                     crate::bbu::ArgSymbol::UnknownPointer(ref a) => Some(vec![(a.clone(), 0)]),
                     _ => None,
@@ -286,7 +286,7 @@ macro_rules! make_std_xnn {
                     _ => false,
                 }
             }
-            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> crate::bbu::USIWrap {
                 match self.d {
                     crate::bbu::ArgSymbol::UnknownData(ref a) => Some(vec![(a.clone(), 0)]),
                     _ => None,
@@ -332,7 +332,7 @@ macro_rules! make_std_xy {
             fn check_symbols(&self) -> bool {
                 false
             }
-            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> crate::bbu::USIWrap {
                 None
             }
             fn get_length(&self) -> crate::bbu::SymbolPosition {
@@ -381,7 +381,7 @@ macro_rules! make_std_xyn {
                     _ => false,
                 }
             }
-            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> crate::bbu::USIWrap {
                 match self.n {
                     crate::bbu::ArgSymbol::UnknownData(ref a) => Some(vec![(a.clone(), 0)]),
                     _ => None,
@@ -424,7 +424,7 @@ macro_rules! make_std_efx {
             fn check_symbols(&self) -> bool {
                 false
             }
-            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> crate::bbu::USIWrap {
                 None
             }
             fn get_length(&self) -> crate::bbu::SymbolPosition {
