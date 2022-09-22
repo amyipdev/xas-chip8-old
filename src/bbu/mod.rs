@@ -52,11 +52,12 @@
 //       ties into license declaration perhaps
 
 // TODO: generic argument types (direct, label, memory, register, etc)
-// TODO: general symbol implementation
 
 use crate::errors::lpanic;
 
+#[cfg(feature = "chip8")]
 pub mod chip8;
+#[cfg(feature = "chip8-raw")]
 pub mod chip8_raw;
 pub mod outs;
 
@@ -76,7 +77,7 @@ pub trait ArchSym<T: SymConv> {
 }
 
 // TODO: really hate using vecs for this
-pub trait ArchInstruction<T: SymConv> {
+pub trait ArchMcrInst<T: SymConv> {
     fn get_output_bytes(&self) -> Vec<u8>;
     fn check_symbols(&self) -> bool;
     fn get_symbols(&self) -> Option<Vec<UnresSymInfo>>;
@@ -88,7 +89,7 @@ pub trait ArchInstruction<T: SymConv> {
     fn get_placeholder(&self) -> Vec<u8>;
     // NOTE: should this return Result<>? Shouldn't be able to fail...
     fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> ();
-    // TODO: is it better to put Sized in the ArchInstruction definition?
+    // TODO: is it better to put Sized in the ArchMcrInst definition?
     fn get_lex(a: Option<Vec<String>>) -> Self
     where
         Self: Sized;

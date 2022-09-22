@@ -25,12 +25,15 @@ use crate::errors::lpanic;
 
 #[derive(Clone, Debug)]
 pub enum PlatformArch {
+    #[cfg(feature = "chip8-raw")]
     ChipEightRaw,
+    #[cfg(feature = "chip8")]
     ChipEight,
 }
 
 #[derive(Clone, Debug)]
 pub enum PlatformTarget {
+    #[cfg(feature = "rawbin")]
     RawBinary,
 }
 
@@ -52,11 +55,14 @@ impl Platform {
         Platform {
             // TODO: consider using some kind of lookup table?
             arch: match arch.to_lowercase().as_str() {
+                #[cfg(feature = "chip8-raw")]
                 "chipeightraw" | "chip8raw" | "c8r" | "chip8r" => PlatformArch::ChipEightRaw,
+                #[cfg(feature = "chip8")]
                 "chipeight" | "chip8" | "c8" => PlatformArch::ChipEight,
                 _ => lpanic("unsupported arch"),
             },
             target: match target.to_lowercase().as_str() {
+                #[cfg(feature = "rawbin")]
                 "bin" | "binary" | "raw" | "rawbin" | "rawbinary" => PlatformTarget::RawBinary,
                 _ => lpanic("unsupported target"),
             },
@@ -69,7 +75,9 @@ impl Platform {
     // True = little, False = big
     pub fn get_endianness(&self) -> bool {
         match self.arch {
+            #[cfg(feature = "chip8")]
             PlatformArch::ChipEight => false,
+            #[cfg(feature = "chip8-raw")]
             PlatformArch::ChipEightRaw => false,
             // _ => lpanic("unsupported arch")
         }

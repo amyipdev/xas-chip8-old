@@ -125,10 +125,13 @@ type VecOptTree<T> = Vec<OptionLeaf<T>>;
 // TODO: move offsets into another part of BBU maybe? probably arch pages?
 // TODO: const fn somehow
 fn get_offset<T: crate::bbu::PtrSize>(p: &crate::platform::Platform) -> T {
+    #[allow(unreachable_patterns)]
     match &p.arch {
+        #[cfg(feature = "chip8-raw")]
         crate::platform::PlatformArch::ChipEightRaw => T::from_int(0x200),
+        #[cfg(feature = "chip8")]
         crate::platform::PlatformArch::ChipEight => T::from_int(0x200),
-        //_ => panic!("unknown arch"),
+        _ => panic!("unknown arch"),
     }
 }
 
