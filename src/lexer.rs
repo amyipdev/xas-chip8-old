@@ -316,7 +316,8 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
             match j {
                 LexLabelType::Base(ref mut a) => a,
                 LexLabelType::Std(ref mut b) => &mut b.ops,
-            }.push(op);
+            }
+            .push(op);
         }
     }
 

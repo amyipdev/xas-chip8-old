@@ -63,7 +63,7 @@ pub mod outs;
 
 pub type SymbolPosition = u8;
 
-pub type UnresSymInfo<'a> = (&'a String, SymbolPosition);
+pub type UnresSymInfo<'a> = (RcSym, SymbolPosition);
 
 pub trait SymConv {
     fn from_ptr<T: PtrSize>(a: T) -> Self;
@@ -72,7 +72,7 @@ pub trait SymConv {
 }
 
 pub trait ArchSym<T: SymConv> {
-    fn get_uk_sym(&self) -> Option<&String>;
+    fn get_uk_sym(&self) -> Option<RcSym>;
     fn set_sym(&mut self, a: T) -> ();
 }
 
@@ -81,6 +81,11 @@ pub trait ArchMcrInst<T: SymConv> {
     fn get_output_bytes(&self) -> Vec<u8>;
     fn check_symbols(&self) -> bool;
     fn get_symbols(&self) -> Option<Vec<UnresSymInfo>>;
+    fn get_length(&self) -> SymbolPosition;
+    // TODO: deprecate? (general project cleaning/deprecation)
+    // TODO: feature `no-deprecated`, removes all deprecated code
+    // TODO: feature `no-log`, removes logging
+    // NOTE: maybe do the same for colored logging?
     fn get_placeholder(&self) -> Vec<u8>;
     // NOTE: should this return Result<>? Shouldn't be able to fail...
     fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> ();
@@ -96,6 +101,7 @@ pub trait ArchMacro {
     fn get_lex(a: Option<Vec<String>>) -> Self
     where
         Self: Sized;
+    fn get_length(&self) -> SymbolPosition;
 }
 
 // TODO NOTE FIXME consider refactoring all of this into parser, so it happens pre-lexing?? maybe??
@@ -285,10 +291,13 @@ fn parse_ukr<T: Integral>(s: &str) -> Option<T> {
 // TODO FIXME better error type
 pub trait ArchReg: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
 
+// TODO: migrate to Rc<str> to avoid cache misses
+pub type RcSym = std::rc::Rc<String>;
+
 #[derive(Clone)]
 pub enum ArgSymbol<T: PtrSize, U: DatSize> {
-    UnknownPointer(String),
-    UnknownData(String),
+    UnknownPointer(RcSym),
+    UnknownData(RcSym),
     Pointer(Box<T>),
     Data(Box<U>),
 }
@@ -449,7 +458,7 @@ fn get_direct_value<T: PtrSize, U: DatSize>(s: &String) -> ArgSymbol<T, U> {
     if s.chars().next().unwrap().is_numeric() {
         return ArgSymbol::Data(Box::new(U::from_str(s).unwrap()));
     } else {
-        return ArgSymbol::UnknownData(s.clone());
+        return ArgSymbol::UnknownData(RcSym::new(s.clone()));
     }
 }
 
@@ -502,7 +511,7 @@ fn extract_mem_symbol<T: PtrSize, U: DatSize>(s: &String) -> ArgSymbol<T, U> {
     if ns.chars().next().unwrap().is_numeric() || ns.chars().next().unwrap() == '-' {
         return ArgSymbol::Pointer(Box::new(T::from_str(&ns).unwrap()));
     } else {
-        return ArgSymbol::UnknownPointer(ns);
+        return ArgSymbol::UnknownPointer(RcSym::new(ns));
     }
 }
 
@@ -512,25 +521,28 @@ fn trim_parentheses(s: &String) -> String {
 }
 
 macro_rules! be_mcr {
-    ($nm:ident,$u:ty) => {
+    ($nm:ident,$u:ty,$len:expr) => {
         pub struct $nm {
-            x: $u
+            x: $u,
         }
         impl ArchMacro for $nm {
             fn get_output_bytes(&self) -> Vec<$u> {
                 Vec::from(self.x.to_be_bytes())
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
-                Self { x: parse_ukr(&a.unwrap()[0]).unwrap() }
+                Self {
+                    x: parse_ukr(&a.unwrap()[0]).unwrap(),
+                }
             }
+            fn get_length(&self) -> SymbolPosition {$len}
         }
-    }
+    };
 }
 
 macro_rules! le_mcr {
-    ($nm:ident,$u:ty) => {
+    ($nm:ident,$u:ty,$len:expr) => {
         pub struct $nm {
-            x: $u
+            x: $u,
         }
         impl ArchMacro for $nm {
             fn get_output_bytes(&self) -> Vec<$u> {
@@ -538,11 +550,14 @@ macro_rules! le_mcr {
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 // TODO; dedup
-                Self { x: parse_ukr(&a.unwrap()[0]).unwrap() }
+                Self {
+                    x: parse_ukr(&a.unwrap()[0]).unwrap(),
+                }
             }
+            fn get_length(&self) -> SymbolPosition {$len}
         }
-    }
+    };
 }
 
-be_mcr!(BigByte, u8);
+be_mcr!(BigByte, u8, 1);
 //be_mcr!(BigWord, u16);

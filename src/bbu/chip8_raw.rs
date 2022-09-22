@@ -41,6 +41,8 @@ use crate::bbu::ArchMacro;
 use crate::bbu::DatSize;
 use crate::bbu::PtrSize;
 
+use crate::bbu::RcSym;
+
 pub type Chip8DatSize = crate::bbu::GenScal<u8>;
 // TODO: generic displacement size for types without one
 // (@u8 for size)
@@ -79,10 +81,10 @@ impl crate::bbu::SymConv for Chip8Symbol {
 }
 
 impl<T: crate::bbu::SymConv> crate::bbu::ArchSym<T> for Chip8Symbol {
-    fn get_uk_sym(&self) -> Option<&String> {
+    fn get_uk_sym(&self) -> Option<RcSym> {
         match &self.i {
             crate::bbu::ArgSymbol::UnknownPointer(i) | crate::bbu::ArgSymbol::UnknownData(i) => {
-                Some(i)
+                Some(i.clone())
             }
             _ => None,
         }
@@ -179,6 +181,9 @@ fn chip8_placeholder() -> Vec<u8> {
     vec![0u8, 0u8]
 }
 
+// TODO: review of public vs pub(crate) vs private api
+const CHIP8_INSTR_LEN: u8 = 2u8;
+
 // lots of code duplication with get_output_bytes TODO FIXME NOTE, somen with get_lex
 
 macro_rules! make_std_const {
@@ -194,8 +199,12 @@ macro_rules! make_std_const {
             fn check_symbols(&self) -> bool {
                 false
             }
-            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+            // TODO: replace tuple with UnresSymInfo
+            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
                 None
+            }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {
+                CHIP8_INSTR_LEN
             }
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
@@ -223,12 +232,15 @@ macro_rules! make_std_nnn {
                     _ => false,
                 }
             }
-            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
                 let r = match self.addr {
-                    crate::bbu::ArgSymbol::UnknownPointer(ref a) => Some(vec![(a, 0)]),
+                    crate::bbu::ArgSymbol::UnknownPointer(ref a) => Some(vec![(a.clone(), 0)]),
                     _ => None,
                 };
                 r
+            }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {
+                CHIP8_INSTR_LEN
             }
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
@@ -274,11 +286,14 @@ macro_rules! make_std_xnn {
                     _ => false,
                 }
             }
-            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
                 match self.d {
-                    crate::bbu::ArgSymbol::UnknownData(ref a) => Some(vec![(a, 0)]),
+                    crate::bbu::ArgSymbol::UnknownData(ref a) => Some(vec![(a.clone(), 0)]),
                     _ => None,
                 }
+            }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {
+                CHIP8_INSTR_LEN
             }
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
@@ -317,8 +332,11 @@ macro_rules! make_std_xy {
             fn check_symbols(&self) -> bool {
                 false
             }
-            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
                 None
+            }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {
+                CHIP8_INSTR_LEN
             }
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
@@ -363,11 +381,14 @@ macro_rules! make_std_xyn {
                     _ => false,
                 }
             }
-            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
                 match self.n {
-                    crate::bbu::ArgSymbol::UnknownData(ref a) => Some(vec![(a, 0)]),
+                    crate::bbu::ArgSymbol::UnknownData(ref a) => Some(vec![(a.clone(), 0)]),
                     _ => None,
                 }
+            }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {
+                CHIP8_INSTR_LEN
             }
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
@@ -403,8 +424,11 @@ macro_rules! make_std_efx {
             fn check_symbols(&self) -> bool {
                 false
             }
-            fn get_symbols(&self) -> Option<Vec<(&String, crate::bbu::SymbolPosition)>> {
+            fn get_symbols(&self) -> Option<Vec<(RcSym, crate::bbu::SymbolPosition)>> {
                 None
+            }
+            fn get_length(&self) -> crate::bbu::SymbolPosition {
+                CHIP8_INSTR_LEN
             }
             fn get_placeholder(&self) -> Vec<u8> {
                 chip8_placeholder()
@@ -470,9 +494,9 @@ fn get_nnn(a: Option<Vec<String>>) -> Chip8SymAlias {
 fn get_xnn(a: Option<Vec<String>>) -> (Chip8ArchReg, Chip8SymAlias) {
     let b: Vec<Chip8Arg> = argcheck(&a, 2);
     (
-            *b[1].unwrap_register().unwrap().reg,
-            // TODO: also avoid this clone
-            b[0].unwrap_direct().unwrap().clone(),
+        *b[1].unwrap_register().unwrap().reg,
+        // TODO: also avoid this clone
+        b[0].unwrap_direct().unwrap().clone(),
     )
     /*
     if let Some(ref i) = a {
@@ -548,16 +572,14 @@ fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<Chip8Arg> {
 macro_rules! gmm {
     ($n:ident,$i:ident) => {{
         Box::new(<crate::bbu::$n as ArchMacro>::get_lex($i.args))
-    }}
+    }};
 }
 
 // TODO: consider putting these in lexer maybe? idk
 // TODO FIXME: add symbols to macros
-pub fn get_macro(
-    i: crate::parser::ParsedMacro,
-) -> Box<dyn ArchMacro> {
+pub fn get_macro(i: crate::parser::ParsedMacro) -> Box<dyn ArchMacro> {
     match i.mcr.to_lowercase().as_str() {
         "byte" => gmm!(BigByte, i),
-        _ => lpanic("macro not supported")
+        _ => lpanic("macro not supported"),
     }
 }
