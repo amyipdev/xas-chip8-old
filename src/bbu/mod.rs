@@ -292,7 +292,7 @@ fn parse_ukr<T: Integral>(s: &str) -> Option<T> {
 pub trait ArchReg: Copy + Clone + std::str::FromStr<Err = std::num::ParseIntError> + Sized {}
 
 // TODO: migrate to Rc<str> to avoid cache misses
-pub type RcSym = std::rc::Rc<String>;
+pub type RcSym = std::rc::Rc<str>;
 
 #[derive(Clone)]
 pub enum ArgSymbol<T: PtrSize, U: DatSize> {
@@ -304,17 +304,17 @@ pub enum ArgSymbol<T: PtrSize, U: DatSize> {
 
 // condense these unwrapper functions TODO
 impl<T: PtrSize, U: DatSize> ArgSymbol<T, U> {
-    pub fn unwrap_unknown_ptr(&self) -> Option<&String> {
+    pub fn unwrap_unknown_ptr(&self) -> Option<RcSym> {
         if let ArgSymbol::UnknownPointer(n) = self {
-            return Some(n);
+            return Some(n.clone());
         } else {
             return None;
         }
     }
 
-    pub fn unwrap_unknown_data(&self) -> Option<&String> {
+    pub fn unwrap_unknown_data(&self) -> Option<RcSym> {
         if let ArgSymbol::UnknownData(n) = self {
-            return Some(n);
+            return Some(n.clone());
         } else {
             return None;
         }
@@ -458,7 +458,7 @@ fn get_direct_value<T: PtrSize, U: DatSize>(s: &String) -> ArgSymbol<T, U> {
     if s.chars().next().unwrap().is_numeric() {
         return ArgSymbol::Data(Box::new(U::from_str(s).unwrap()));
     } else {
-        return ArgSymbol::UnknownData(RcSym::new(s.clone()));
+        return ArgSymbol::UnknownData(RcSym::from(s.as_str()));
     }
 }
 
@@ -511,7 +511,7 @@ fn extract_mem_symbol<T: PtrSize, U: DatSize>(s: &String) -> ArgSymbol<T, U> {
     if ns.chars().next().unwrap().is_numeric() || ns.chars().next().unwrap() == '-' {
         return ArgSymbol::Pointer(Box::new(T::from_str(&ns).unwrap()));
     } else {
-        return ArgSymbol::UnknownPointer(RcSym::new(ns));
+        return ArgSymbol::UnknownPointer(RcSym::from(ns.as_str()));
     }
 }
 
