@@ -21,21 +21,17 @@
  * <https://gnu.org/licenses/old-licenses/gpl-2.0.html>.
  */
 
-// TODO: readme finishing (rst? md? decide)
 // TODO: styling guide
 //       - mod/crate/use order
 // TODO: improve CI (see PR #2)
 // TODO: tests
 // TODO: examples
 // TODO: publish on crates.io
-// TODO: use cargo-msrv to determine minimum rust version
 // TODO: proper logging via interface w/ log crate (use all 5 levels)
 //       - consider hiding behind a feature
 // TODO: benchmarks, tests, examples
 // TODO: migrate TODOs to GitHub issues/milestones
 // TODO: documentation + other repo setup
-// TODO: consider fully migrating to GitLab, or as an ecosystem
-// TODO: what the hell is going on with binary sizing?
 // TODO: GH Pages? Whatever, something representing the library needs setup for crates
 
 use std::collections::VecDeque;
@@ -45,7 +41,7 @@ use crate::errors::lpanic;
 // TODO: replace all (project-wide) lookup tables with static strings
 // that go to enums with https://github.com/rust-phf/rust-phf
 
-// TODO: turn this into a block comment
+// TODO: make this documentation
 // Tree logic:
 // - Vec<LexSection>
 //   - LexSection S1 (flags0)
@@ -340,7 +336,6 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                 crate::platform::PlatformArch::ChipEight => {
                     LexOperation::Instruction(crate::bbu::chip8::get_instruction::<T>(i))
                 }
-                //_ => panic!("architecture not implemented yet"),
             };
             match j {
                 LexLabelType::Base(ref mut a) => a,
@@ -348,6 +343,5 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
             }
             .push(op);
         }
-        // NHNF
     }
 }

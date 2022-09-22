@@ -26,6 +26,8 @@ use log::error;
 
 static mut LOGGING_HINT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
+// TODO: atomicbool and unsafe feels unnecessary
+// see if there's any other way to make a persistent state
 pub fn hint_logged() -> () {
     unsafe { LOGGING_HINT.store(true, std::sync::atomic::Ordering::Relaxed) };
 }

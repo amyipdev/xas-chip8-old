@@ -42,6 +42,7 @@ fn arg_is_register(a: &Option<Vec<String>> /*, p: usize*/) -> bool {
     }
 }
 
+// TODO: simplify gim, gmm, and make them global
 macro_rules! gim {
     ($n:ident,$i:ident) => {{
         Box::new(<chip8_raw::$n as crate::bbu::ArchMcrInst<

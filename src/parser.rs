@@ -23,7 +23,8 @@
 
 // TODO: box analysis
 // how much should be stored in boxes... returning huge structs from functions
-// isn't always the best idea, we might want to consider boxes (+ saves stack space)
+// isn't always the best idea, we might want to consider boxes
+// potential caching issues??
 
 // TODO: trait analysis
 // figure out what needs to be implemented, and should be implemented
@@ -40,6 +41,7 @@ use std::collections::VecDeque;
 // what's annoying is having to map to any existing error type
 
 // TODO: manual implementation of Debug, Display for parsed structs
+// TODO: consider copy, clone?
 
 /// Instruction which has been parsed by a Parser.
 /// Holds the instruction name as a string, and a vector of the arguments.
@@ -257,6 +259,7 @@ fn acs_from_str(s: &str) -> impl Iterator<Item = String> + '_ {
     }
 }
 
+// TODO: optimize
 fn split_comments(s: &str) -> String {
     s.split("//")
         .next()

@@ -498,40 +498,15 @@ fn get_xnn(a: Option<Vec<String>>) -> (Chip8ArchReg, Chip8SymAlias) {
         // TODO: also avoid this clone
         b[0].unwrap_direct().unwrap().clone(),
     )
-    /*
-    if let Some(ref i) = a {
-        if i.len() != 2 {
-            lpanic("c8r: not enough args")
-        }
-        // TODO: move these directly in
-        // data
-        let b: Chip8Arg = crate::bbu::parse_arg(&a.as_ref().unwrap()[0]).unwrap();
-        // register X
-        let c: Chip8Arg = crate::bbu::parse_arg(&a.as_ref().unwrap()[1]).unwrap();
-        (
-            *c.unwrap_register().unwrap().reg,
-            // TODO: also avoid this clone
-            b.unwrap_direct().unwrap().clone(),
-        )
-    } else {
-        lpanic("c8r: not enough args")
-    }*/
 }
 
 // NOTE: is tuple the best option here? Would an array be better?
 fn get_xy(a: Option<Vec<String>>) -> (Chip8ArchReg, Chip8ArchReg) {
-    //if let Some(ref i) = a {
-    //    if i.len() != 2 {
-    //        panic!("c8r: not enough args")
-    //    }
     let b: Vec<Chip8Arg> = argcheck(&a, 2);
     (
         *b[0].unwrap_register().unwrap().reg,
         *b[1].unwrap_register().unwrap().reg,
     )
-    //} else {
-    //    panic!("c8r: not enough args")
-    //}
 }
 
 // res.0 limited to 4 bits

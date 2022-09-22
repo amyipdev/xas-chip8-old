@@ -28,20 +28,6 @@ pub mod rawbin;
 pub type LabelTree<T> = std::collections::HashMap<String, T>;
 
 // TODO: fix inherent cloning issues with String
-// also, TODO: it is absolutely not necessary for these to be ordered
-// T = crate::bbu::SymConv, U = crate::bbu::PTR_SIZE
-//pub type UnresSymTree<T, U> = Vec<(Box<dyn crate::bbu::ArchInstruction<T>>, U)>;
-
-// TODO NOTE: utility function
-// o = offset
-/*
-pub fn vec_update(s: &Vec<u8>, d: &mut Vec<u8>, o: usize) -> () {
-    // TODO: make this more efficient, this is slow asf
-    // also, TODO: make this work for Vec<T: Integral>
-    for e in 0..s.len() {
-        d[o + e] = s[e];
-    }
-}*/
 
 pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
     src: Vec<crate::lexer::LexSection<T>>,
@@ -53,6 +39,5 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
     match plat.target {
         #[cfg(feature = "rawbin")]
         crate::platform::PlatformTarget::RawBinary => rawbin::run_output::<T, U>(src, dest, plat),
-        //_ => panic!("unsupported combination"),
     }
 }
