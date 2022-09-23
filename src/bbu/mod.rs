@@ -76,14 +76,14 @@ pub trait ArchSym<T: SymConv> {
 }
 
 // TODO: really hate using vecs for this
-pub trait ArchInstruction<T: SymConv> {
+pub trait ArchMcrInst<T: SymConv> {
     fn get_output_bytes(&self) -> Vec<u8>;
     fn check_symbols(&self) -> bool;
     fn get_symbols(&self) -> Option<Vec<UnresSymInfo>>;
     fn get_placeholder(&self) -> Vec<u8>;
     // NOTE: should this return Result<>? Shouldn't be able to fail...
     fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> ();
-    // TODO: is it better to put Sized in the ArchInstruction definition?
+    // TODO: is it better to put Sized in the ArchMcrInst definition?
     fn get_lex(a: Option<Vec<String>>) -> Self
     where
         Self: Sized;

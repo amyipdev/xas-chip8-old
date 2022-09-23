@@ -44,7 +44,7 @@ fn arg_is_register(a: &Option<Vec<String>> /*, p: usize*/) -> bool {
 
 macro_rules! gim {
     ($n:ident,$i:ident) => {{
-        Box::new(<chip8_raw::$n as crate::bbu::ArchInstruction<
+        Box::new(<chip8_raw::$n as crate::bbu::ArchMcrInst<
             chip8_raw::Chip8Symbol,
         >>::get_lex($i.args))
     }};
@@ -54,7 +54,7 @@ macro_rules! gim {
 // there's a lot of code duplication here
 pub fn get_instruction<T: crate::bbu::SymConv>(
     i: crate::parser::ParsedInstruction,
-) -> Box<dyn crate::bbu::ArchInstruction<T>> {
+) -> Box<dyn crate::bbu::ArchMcrInst<T>> {
     match i.instr.to_lowercase().as_str() {
         "mcr" => gim!(Chip8_0NNN, i),
         "cls" => gim!(Chip8_00E0, i),
