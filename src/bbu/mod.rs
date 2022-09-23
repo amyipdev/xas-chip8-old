@@ -510,12 +510,39 @@ fn trim_parentheses(s: &String) -> String {
     s.trim_start_matches('(').trim_end_matches(')').to_string()
 }
 
+pub struct GenSymbol<T: PtrSize + DatSize + Integral> {
+    pub i: ArgSymbol<T, T>
+}
+
+impl<V: PtrSize + DatSize + Integral> crate::bbu::SymConv for GenSymbol<V> {
+    fn from_ptr<T: PtrSize>(a: T) -> Self {
+        Self {
+            i: crate::bbu::ArgSymbol::Pointer(Box::new(
+                <V as PtrSize>::from_int::<V>(a.extract_int::<V>()),
+            )),
+        }
+    }
+    fn from_dat<T: DatSize>(a: T) -> Self {
+        Self {
+            i: crate::bbu::ArgSymbol::Data(Box::new(<V as DatSize>::from_int::<V>(
+                a.extract_int::<V>(),
+            ))),
+        }
+    }
+    fn into_ptr<T: PtrSize, E: Integral>(&self) -> T {
+        T::from_int(crate::bbu::PtrSize::extract_int::<E>(
+            &**self.i.unwrap_ptr().unwrap(),
+        ))
+    }
+
+}
+
 macro_rules! be_mcr {
     ($nm:ident,$u:ty) => {
         pub struct $nm {
             x: $u
         }
-        impl <T: SymConv> ArchMcrInst<T> for $nm {
+        impl ArchMcrInst<GenSymbol<$u>> for $nm {
             fn get_output_bytes(&self) -> Vec<$u> {
                 unimplemented!()
             }
@@ -543,7 +570,7 @@ macro_rules! le_mcr {
         pub struct $nm {
             x: $u
         }
-        impl <T: SymConv> ArchMcrInst<T> for $nm {
+        impl ArchMcrInst<$u> for $nm {
             fn get_output_bytes(&self) -> Vec<$u> {
                 unimplemented!()
             }
@@ -566,5 +593,5 @@ macro_rules! le_mcr {
     }
 }
 
-be_mcr!(BigByte, u8);
+be_mcr!(BigByte, GenScal<u8>);
 //be_mcr!(BigWord, u16);

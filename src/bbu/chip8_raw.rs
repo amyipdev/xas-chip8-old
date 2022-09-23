@@ -548,7 +548,7 @@ fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<Chip8Arg> {
 macro_rules! gmm {
     ($n:ident,$i:ident) => {
         Box::new(<crate::bbu::$n as ArchMcrInst>::get_lex($i.args))
-    }}
+    }
 }
 
 // TODO: consider putting these in lexer maybe? idk
