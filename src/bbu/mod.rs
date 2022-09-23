@@ -515,9 +515,21 @@ macro_rules! be_mcr {
         pub struct $nm {
             x: $u
         }
-        impl ArchMacro for $nm {
+        impl <T: SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<$u> {
-                Vec::from(self.x.to_be_bytes())
+                unimplemented!()
+            }
+            fn check_symbols(&self) -> bool {
+                unimplemented!()
+            }
+            fn get_symbols(&self) -> Option<Vec<UnresSymInfo>> {
+                unimplemented!()
+            }
+            fn get_placeholder(&self) -> Vec<u8> {
+                unimplemented!()
+            }
+            fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> () {
+                unimplemented!()
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 Self { x: parse_ukr(&a.unwrap()[0]).unwrap() }
@@ -531,12 +543,23 @@ macro_rules! le_mcr {
         pub struct $nm {
             x: $u
         }
-        impl ArchMacro for $nm {
+        impl <T: SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<$u> {
-                Vec::from(self.x.to_le_bytes())
+                unimplemented!()
+            }
+            fn check_symbols(&self) -> bool {
+                unimplemented!()
+            }
+            fn get_symbols(&self) -> Option<Vec<UnresSymInfo>> {
+                unimplemented!()
+            }
+            fn get_placeholder(&self) -> Vec<u8> {
+                unimplemented!()
+            }
+            fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> () {
+                unimplemented!()
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
-                // TODO; dedup
                 Self { x: parse_ukr(&a.unwrap()[0]).unwrap() }
             }
         }

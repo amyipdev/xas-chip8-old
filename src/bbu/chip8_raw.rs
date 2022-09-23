@@ -34,7 +34,7 @@ use std::str::FromStr;
 // TODO: better error handling
 // TODO: reduce repetition of this
 use crate::bbu::ArchMcrInst;
-use crate::bbu::ArchMacro;
+use crate::bbu::SymConv;
 
 // TODO: push the shortening out throughout the file
 // TODO: and same with this:
@@ -546,16 +546,16 @@ fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<Chip8Arg> {
 // TODO FIXME NOTE: throw warnings when number is truncated!
 
 macro_rules! gmm {
-    ($n:ident,$i:ident) => {{
-        Box::new(<crate::bbu::$n as ArchMacro>::get_lex($i.args))
+    ($n:ident,$i:ident) => {
+        Box::new(<crate::bbu::$n as ArchMcrInst>::get_lex($i.args))
     }}
 }
 
 // TODO: consider putting these in lexer maybe? idk
 // TODO FIXME: add symbols to macros
-pub fn get_macro(
+pub fn get_macro <T: SymConv>(
     i: crate::parser::ParsedMacro,
-) -> Box<dyn ArchMacro> {
+) -> Box<dyn ArchMcrInst<T>> {
     match i.mcr.to_lowercase().as_str() {
         "byte" => gmm!(BigByte, i),
         _ => lpanic("macro not supported")
