@@ -22,9 +22,9 @@
  */
 
 use crate::bbu::chip8_raw;
+use crate::bbu::ArchMcrInst;
 use crate::errors::lpanic;
-
-use crate::bbu::ArchMacro;
+use crate::bbu::SymConv;
 
 // TODO: utility, global it - readd in p
 // TODO: probably a better way than this
@@ -118,6 +118,8 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
     }
 }
 
-pub fn get_macro(i: crate::parser::ParsedMacro) -> Box<dyn ArchMacro> {
+pub fn get_macro <T: SymConv>(
+    i: crate::parser::ParsedMacro
+) -> Box<dyn ArchMcrInst<T>> {
     chip8_raw::get_macro(i)
 }
