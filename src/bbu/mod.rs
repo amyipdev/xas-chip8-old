@@ -510,11 +510,11 @@ fn trim_parentheses(s: &String) -> String {
     s.trim_start_matches('(').trim_end_matches(')').to_string()
 }
 
-pub struct GenSymbol<T: PtrSize + DatSize + Integral> {
+pub struct GenSymbol<T: PtrSize + DatSize`> {
     pub i: ArgSymbol<T, T>
 }
 
-impl<V: PtrSize + DatSize + Integral> crate::bbu::SymConv for GenSymbol<V> {
+impl<V: PtrSize + DatSize> crate::bbu::SymConv for GenSymbol<V> {
     fn from_ptr<T: PtrSize>(a: T) -> Self {
         Self {
             i: crate::bbu::ArgSymbol::Pointer(Box::new(
