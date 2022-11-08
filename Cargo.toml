@@ -1,7 +1,7 @@
 [package]
 name = "libxas"
 # v1.0 will be the first "production-ready" version
-version = "0.0.1"
+version = "0.1.0-rc2+"
 edition = "2021"
 authors = ["Amy Parker <apark0006@student.cerritos.edu>"]
 description = "Extendable Assembler library"
