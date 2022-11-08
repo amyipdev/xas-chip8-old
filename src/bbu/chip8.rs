@@ -118,6 +118,6 @@ pub fn get_instruction<T: crate::bbu::SymConv>(
     }
 }
 
-pub fn get_macro(i: crate::parser::ParsedMacro) -> Box<dyn ArchMacro> {
+pub fn get_macro<T: crate::bbu::SymConv>(i: crate::parser::ParsedMacro) -> Box<dyn crate::bbu::ArchMcrInst<T>> {
     chip8_raw::get_macro(i)
 }

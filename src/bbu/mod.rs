@@ -525,7 +525,7 @@ macro_rules! be_mcr {
         pub struct $nm {
             x: $u,
         }
-        impl ArchMacro for $nm {
+        impl<T: SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<$u> {
                 Vec::from(self.x.to_be_bytes())
             }
@@ -535,6 +535,10 @@ macro_rules! be_mcr {
                 }
             }
             fn get_length(&self) -> SymbolPosition {$len}
+            fn get_symbols(&self) -> USIWrap {unimplemented!()}
+            fn get_placeholder(&self) -> Vec<u8> {unimplemented!()}
+            fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> () {unimplemented!()}
+            fn check_symbols(&self) -> bool {false}
         }
     };
 }

@@ -571,13 +571,13 @@ fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<Chip8Arg> {
 
 macro_rules! gmm {
     ($n:ident,$i:ident) => {{
-        Box::new(<crate::bbu::$n as ArchMacro>::get_lex($i.args))
+        Box::new(<crate::bbu::$n as ArchMcrInst<Chip8Symbol>>::get_lex($i.args))
     }};
 }
 
 // TODO: consider putting these in lexer maybe? idk
 // TODO FIXME: add symbols to macros
-pub fn get_macro(i: crate::parser::ParsedMacro) -> Box<dyn ArchMacro> {
+pub fn get_macro<T: crate::bbu::SymConv>(i: crate::parser::ParsedMacro) -> Box<dyn ArchMcrInst<T>> {
     match i.mcr.to_lowercase().as_str() {
         "byte" => gmm!(BigByte, i),
         _ => lpanic("macro not supported"),
