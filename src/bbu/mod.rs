@@ -538,7 +538,7 @@ macro_rules! be_mcr {
             x: ArgSymbol<GenScal<$u>, GenScal<$u>>,
         }
         impl<T: SymConv> ArchMcrInst<T> for $nm {
-            fn get_output_bytes(&self) -> Vec<$u> {
+            fn get_output_bytes(&self) -> Vec<u8> {
                 Vec::from(self.x.unwrap_ptr().unwrap().i.to_be_bytes())
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
@@ -602,4 +602,5 @@ macro_rules! le_mcr {
 }
 
 be_mcr!(Bu8, u8);
+be_mcr!(Bu16, u16);
 //be_mcr!(BigWord, u16);

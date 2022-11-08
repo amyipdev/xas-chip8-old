@@ -584,6 +584,7 @@ macro_rules! gmm {
 pub fn get_macro<T: crate::bbu::SymConv>(i: crate::parser::ParsedMacro) -> Box<dyn ArchMcrInst<T>> {
     match i.mcr.to_lowercase().as_str() {
         "byte" => gmm!(Bu8, i),
+        "word" => gmm!(Bu16, i),
         _ => lpanic("macro not supported"),
     }
 }

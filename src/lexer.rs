@@ -253,7 +253,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                 // adding a flag of some kind to LexSection?
                 // TODO: better matching system if not, this needs overhaul
                 match j.mcr.to_lowercase().as_str() {
-                    "byte" => {
+                    "byte" | "word" => {
                         self.push_macro(j);
                     }
                     "label" | "lbl" => {
