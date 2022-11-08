@@ -510,7 +510,9 @@ fn extract_mem_symbol<T: PtrSize, U: DatSize>(s: &String) -> ArgSymbol<T, U> {
     // TODO in general, more illegal syntax catching
 
     // + NOTE better error handling
-    // NOTE TODO don't run double, also should it be .any(|x|)?
+    // NOTE TODO don't run double chars(), also should it be .any(|x|)?
+    // NOTE: negative pointers are acceptable, since macros and family use
+    //       pointers to represent values no matter what
     if ns.chars().next().unwrap().is_numeric() || ns.chars().next().unwrap() == '-' {
         return ArgSymbol::Pointer(Box::new(T::from_str(&ns).unwrap()));
     } else {
@@ -523,22 +525,25 @@ fn trim_parentheses(s: &String) -> String {
     s.trim_start_matches('(').trim_end_matches(')').to_string()
 }
 
+// TODO: dedup be_mcr, le_mcr
+// the only difference is to_be_bytes() vs to_le_bytes()
+// this doesn't require full duplication like here
+// this also applies to a lot of the c8 macros
+
+// internally use UKP, even though they're gonna be the same
+// just a side effect of reusing existing tooling
 macro_rules! be_mcr {
     ($nm:ident,$u:ty) => {
         pub struct $nm {
-            x: Option<$u>,
+            x: ArgSymbol<GenScal<$u>, GenScal<$u>>,
         }
         impl<T: SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<$u> {
-                Vec::from(self.x.unwrap().to_be_bytes())
+                Vec::from(self.x.unwrap_ptr().unwrap().i.to_be_bytes())
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 Self {
-                    x: if a.as_ref().unwrap()[0].chars().next().unwrap().is_numeric() {
-                        Some(parse_ukr(&a.unwrap()[0]).unwrap())
-                    } else {
-                        None
-                    },
+                    x: extract_mem_symbol(&a.unwrap()[0])
                 }
             }
             // TODO: does this present any problems? for numerics it shouldn't
@@ -547,16 +552,28 @@ macro_rules! be_mcr {
                 std::mem::size_of::<$u>()
             }
             fn get_symbols(&self) -> USIWrap {
-                unimplemented!()
+                match self.x {
+                    crate::bbu::ArgSymbol::UnknownPointer(ref a) => Some(vec![(a.clone(), 0)]),
+                    _ => None
+                }
             }
+            // GPH is unnecessary for macros currently
             fn get_placeholder(&self) -> Vec<u8> {
                 unimplemented!()
             }
             fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> () {
-                unimplemented!()
+                match p {
+                    0 => {
+                        self.x = ArgSymbol::Pointer(Box::new(s.into_ptr::<GenScal<$u>, $u>()))
+                    }
+                    _ => lpanic("bbu: bemcr: unknown positional"),
+                }
             }
             fn check_symbols(&self) -> bool {
-                false
+                match self.x {
+                    ArgSymbol::UnknownPointer(_) => true,
+                    _ => false,
+                }
             }
         }
     };
@@ -584,5 +601,5 @@ macro_rules! le_mcr {
     };
 }
 
-be_mcr!(BigByte, u8);
+be_mcr!(Bu8, u8);
 //be_mcr!(BigWord, u16);

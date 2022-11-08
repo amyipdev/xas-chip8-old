@@ -281,6 +281,7 @@ macro_rules! make_std_xnn {
                 let b: (Chip8ArchReg, Chip8SymAlias) = get_xnn(a);
                 Self { x: b.0, d: b.1 }
             }
+            // TODO: better optimize this
             fn check_symbols(&self) -> bool {
                 match self.d {
                     crate::bbu::ArgSymbol::UnknownData(_) => true,
@@ -582,7 +583,7 @@ macro_rules! gmm {
 // TODO FIXME: add symbols to macros
 pub fn get_macro<T: crate::bbu::SymConv>(i: crate::parser::ParsedMacro) -> Box<dyn ArchMcrInst<T>> {
     match i.mcr.to_lowercase().as_str() {
-        "byte" => gmm!(BigByte, i),
+        "byte" => gmm!(Bu8, i),
         _ => lpanic("macro not supported"),
     }
 }
