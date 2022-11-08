@@ -61,7 +61,10 @@ pub mod chip8;
 pub mod chip8_raw;
 pub mod outs;
 
-pub type SymbolPosition = u8;
+// potentially wasteful
+// TODO: consider converting back to u8
+// also the lack of consistency is... potentially troubling
+pub type SymbolPosition = usize;
 
 pub type USIWrap = Option<Vec<(RcSym, SymbolPosition)>>;
 
@@ -521,24 +524,40 @@ fn trim_parentheses(s: &String) -> String {
 }
 
 macro_rules! be_mcr {
-    ($nm:ident,$u:ty,$len:expr) => {
+    ($nm:ident,$u:ty) => {
         pub struct $nm {
-            x: $u,
+            x: Option<$u>,
         }
         impl<T: SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<$u> {
-                Vec::from(self.x.to_be_bytes())
+                Vec::from(self.x.unwrap().to_be_bytes())
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 Self {
-                    x: parse_ukr(&a.unwrap()[0]).unwrap(),
+                    x: if a.as_ref().unwrap()[0].chars().next().unwrap().is_numeric() {
+                        Some(parse_ukr(&a.unwrap()[0]).unwrap())
+                    } else {
+                        None
+                    },
                 }
             }
-            fn get_length(&self) -> SymbolPosition {$len}
-            fn get_symbols(&self) -> USIWrap {unimplemented!()}
-            fn get_placeholder(&self) -> Vec<u8> {unimplemented!()}
-            fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> () {unimplemented!()}
-            fn check_symbols(&self) -> bool {false}
+            // TODO: does this present any problems? for numerics it shouldn't
+            // reeval later
+            fn get_length(&self) -> SymbolPosition {
+                std::mem::size_of::<$u>()
+            }
+            fn get_symbols(&self) -> USIWrap {
+                unimplemented!()
+            }
+            fn get_placeholder(&self) -> Vec<u8> {
+                unimplemented!()
+            }
+            fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> () {
+                unimplemented!()
+            }
+            fn check_symbols(&self) -> bool {
+                false
+            }
         }
     };
 }
@@ -558,10 +577,12 @@ macro_rules! le_mcr {
                     x: parse_ukr(&a.unwrap()[0]).unwrap(),
                 }
             }
-            fn get_length(&self) -> SymbolPosition {$len}
+            fn get_length(&self) -> SymbolPosition {
+                $len
+            }
         }
     };
 }
 
-be_mcr!(BigByte, u8, 1);
+be_mcr!(BigByte, u8);
 //be_mcr!(BigWord, u16);

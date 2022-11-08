@@ -45,20 +45,15 @@ pub fn assemble_full_source(src: &String, pl: &crate::platform::Platform) -> Vec
     match pl.arch {
         // code dup bt c8r, c8 TODO
         #[cfg(feature = "chip8-raw")]
-        crate::platform::PlatformArch::ChipEightRaw => {
-            assemble_full_source_gen::<
-                crate::bbu::chip8_raw::Chip8Symbol,
-                crate::bbu::chip8_raw::Chip8PtrSize,
-            >(p.pop_vdq(), pl)
-        }
+        crate::platform::PlatformArch::ChipEightRaw => assemble_full_source_gen::<
+            crate::bbu::chip8_raw::Chip8Symbol,
+            crate::bbu::chip8_raw::Chip8PtrSize,
+        >(p.pop_vdq(), pl),
         #[cfg(feature = "chip8")]
-        crate::platform::PlatformArch::ChipEight => {
-            assemble_full_source_gen::<
-                crate::bbu::chip8_raw::Chip8Symbol,
-                crate::bbu::chip8_raw::Chip8PtrSize,
-            >(p.pop_vdq(), pl)
-        }
-        //_ => panic!("unknown arch")
+        crate::platform::PlatformArch::ChipEight => assemble_full_source_gen::<
+            crate::bbu::chip8_raw::Chip8Symbol,
+            crate::bbu::chip8_raw::Chip8PtrSize,
+        >(p.pop_vdq(), pl), //_ => panic!("unknown arch")
     }
 }
 

@@ -175,8 +175,7 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
                             dt.push(OptionLeaf::Symbol(n))
                         }
                         l
-                    }
-                    //_ => lpanic("unsupported op type"),
+                    } //_ => lpanic("unsupported op type"),
                 };
                 cp.add_int(b);
             }
