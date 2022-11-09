@@ -579,6 +579,7 @@ macro_rules! be_mcr {
     };
 }
 
+/*
 macro_rules! le_mcr {
     ($nm:ident,$u:ty,$len:expr) => {
         pub struct $nm {
@@ -599,7 +600,7 @@ macro_rules! le_mcr {
             }
         }
     };
-}
+}*/
 
 be_mcr!(Bu8, u8);
 be_mcr!(Bu16, u16);
