@@ -98,6 +98,7 @@ pub trait ArchMcrInst<T: SymConv> {
         Self: Sized;
 }
 
+/*
 // TODO FIXME: support symbols in macros
 pub trait ArchMacro {
     fn get_output_bytes(&self) -> Vec<u8>;
@@ -105,7 +106,7 @@ pub trait ArchMacro {
     where
         Self: Sized;
     fn get_length(&self) -> SymbolPosition;
-}
+}*/
 
 // TODO NOTE FIXME consider refactoring all of this into parser, so it happens pre-lexing?? maybe??
 
