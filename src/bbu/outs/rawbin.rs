@@ -161,11 +161,11 @@ pub fn run_output<T: crate::bbu::SymConv, U: crate::bbu::PtrSize>(
             for op in label_parts.0 {
                 let b = match op {
                     // macros will be dead soon anyways
-                    crate::lexer::LexOperation::Macro(m) => {
-                        let l = m.get_length();
-                        dt.push(OptionLeaf::Constant(m.get_output_bytes()));
-                        l
-                    }
+                    //crate::lexer::LexOperation::Macro(m) => {
+                    //    let l = m.get_length();
+                    //    dt.push(OptionLeaf::Constant(m.get_output_bytes()));
+                    //    l
+                    //}
                     crate::lexer::LexOperation::Instruction(n) => {
                         let l = n.get_length(); // pre-save before move
                         if !n.check_symbols() {
