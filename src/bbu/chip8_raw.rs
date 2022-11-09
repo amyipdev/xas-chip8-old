@@ -33,7 +33,7 @@ use std::str::FromStr;
 
 // TODO: better error handling
 // TODO: reduce repetition of this
-use crate::bbu::ArchMacro;
+//use crate::bbu::ArchMacro;
 use crate::bbu::ArchMcrInst;
 
 // TODO: push the shortening out throughout the file
