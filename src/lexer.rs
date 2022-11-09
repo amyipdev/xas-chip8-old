@@ -42,6 +42,10 @@ use std::collections::VecDeque;
 
 use crate::errors::lpanic;
 
+use crate::bbu::SymConv;
+
+use crate::parser::ParsedOperation;
+
 // TODO: replace all (project-wide) lookup tables with static strings
 // that go to enums with https://github.com/rust-phf/rust-phf
 
@@ -68,12 +72,13 @@ use crate::errors::lpanic;
 // TODO: consider phasing out LexOperation, as is no longer necessary
 // keeping things wrapped inside a single-item enum doesn't particularly
 // make much sense
-pub enum LexOperation<T: crate::bbu::SymConv> {
+pub enum LexOperation<T: SymConv> {
     Instruction(Box<dyn crate::bbu::ArchMcrInst<T>>),
     //Macro(Box<dyn crate::bbu::ArchMacro>),
 }
 
-impl<T: crate::bbu::SymConv> std::fmt::Debug for LexOperation<T> {
+// TODO: consider removing
+impl<T: SymConv> std::fmt::Debug for LexOperation<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             LexOperation::Instruction(ref i) => {
@@ -85,7 +90,7 @@ impl<T: crate::bbu::SymConv> std::fmt::Debug for LexOperation<T> {
 }
 
 // TODO: consider changing all instances working with lexop to extract/place
-impl<T: crate::bbu::SymConv> LexOperation<T> {
+impl<T: SymConv> LexOperation<T> {
     // TODO: has to be a better way to optimize this
     // pulling things out of enums is such a size increaser
     // would struct with associated non-holding enum be better?
@@ -104,21 +109,21 @@ impl<T: crate::bbu::SymConv> LexOperation<T> {
 pub type LexIdLabel<T> = Vec<LexOperation<T>>;
 
 #[derive(Debug)]
-pub struct LexLabel<T: crate::bbu::SymConv> {
+pub struct LexLabel<T: SymConv> {
     pub name: String,
     pub ops: LexIdLabel<T>,
 }
 
 // TODO: consider rep. man. debug, see for all Lex types
 #[derive(Debug)]
-pub enum LexLabelType<T: crate::bbu::SymConv> {
+pub enum LexLabelType<T: SymConv> {
     Base(LexIdLabel<T>),
     Std(LexLabel<T>),
 }
 
 // TODO: change anything interacting with LexLabelType to use extract
 // TODO: make extract_mut to allow placement
-impl<T: crate::bbu::SymConv> LexLabelType<T> {
+impl<T: SymConv> LexLabelType<T> {
     pub fn extract(self) -> (LexIdLabel<T>, Option<String>) {
         // TODO: is this best?
         match self {
@@ -129,7 +134,7 @@ impl<T: crate::bbu::SymConv> LexLabelType<T> {
 }
 
 #[derive(Debug)]
-pub struct LexSection<T: crate::bbu::SymConv> {
+pub struct LexSection<T: SymConv> {
     pub name: String,
     pub labels: Vec<LexLabelType<T>>,
 }
@@ -137,10 +142,10 @@ pub struct LexSection<T: crate::bbu::SymConv> {
 // TODO: consider replacing with manual Debug trait
 #[derive(Debug)]
 // TODO: import crate::bbu::SymConv
-pub struct Lexer<T: crate::bbu::SymConv> {
+pub struct Lexer<T: SymConv> {
     // This method requires that the Lexer takes ownership of a
     // Parser's d-out.
-    q: VecDeque<crate::parser::ParsedOperation>,
+    q: VecDeque<ParsedOperation>,
     d: Vec<LexSection<T>>,
     // Current section
     cs: Option<LexSection<T>>,
@@ -152,7 +157,7 @@ pub struct Lexer<T: crate::bbu::SymConv> {
 
 // TODO: explore whether vec![] is better/worse than Vec::new()
 // TODO: remove unnecessary type locking on impl
-impl<T: crate::bbu::SymConv> Lexer<T> {
+impl<T: SymConv> Lexer<T> {
     // push_label does not generate a new label because it could be called
     // on the last label of a section - we wouldn't want a new std label,
     // as that new section needs its own id label
@@ -189,6 +194,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
     // TODO: proper error handling
     // TODO: allow specifying section parameters
     // TODO: shift burden of extraction onto caller, just take a string to make life easier here
+    // FIXME give a shortname to Option<Vec<String>>
     fn gen_section(&mut self, name: Option<Vec<String>>) -> () {
         if let Some(mut n) = name {
             if n.len() == 0 {
@@ -210,7 +216,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
 
     // TODO; note VDQ = VecDeque
     pub fn from_vdq(
-        q: VecDeque<crate::parser::ParsedOperation>,
+        q: VecDeque<ParsedOperation>,
         p: crate::platform::Platform,
     ) -> Self {
         Lexer {
@@ -239,7 +245,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
             self.gen_section(Some(vec![".__defsection".to_string()]))
         }
         while let Some(i) = self.q.pop_front() {
-            if let crate::parser::ParsedOperation::Macro(j) = i {
+            if let ParsedOperation::Macro(j) = i {
                 // Override for label beginnings
                 if j.mcr.chars().last().unwrap() == ':' {
                     self.push_label();
@@ -296,7 +302,7 @@ impl<T: crate::bbu::SymConv> Lexer<T> {
                     _ => lpanic("lexer: unknown macro"),
                 }
             // TODO: find better solution that else-if-let since it's guaranteed to end up here
-            } else if let crate::parser::ParsedOperation::Instruction(j) = i {
+            } else if let ParsedOperation::Instruction(j) = i {
                 // push instruction onto current label
                 self.push_instruction(j);
             }
