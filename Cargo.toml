@@ -1,7 +1,7 @@
 [package]
 name = "libxas"
 # v1.0 will be the first "production-ready" version
-version = "0.0.1"
+version = "0.1.0-rc2x"
 edition = "2021"
 authors = ["Amy Parker <apark0006@student.cerritos.edu>"]
 description = "Extendable Assembler library"
@@ -9,7 +9,7 @@ description = "Extendable Assembler library"
 documentation = "https://docs.rs/libxas"
 # When the README is converted the file name needs to be changed
 # Because of crates we should probably use Markdown
-readme = "README"
+readme = "README.md"
 #homepage =
 repository = "https://github.com/amyipdev/libxas"
 license = "GPL-2.0-or-later"

@@ -33,8 +33,8 @@ use std::str::FromStr;
 
 // TODO: better error handling
 // TODO: reduce repetition of this
-use crate::bbu::ArchMcrInst;
 use crate::bbu::ArchMacro;
+use crate::bbu::ArchMcrInst;
 
 // TODO: push the shortening out throughout the file
 // TODO: and same with this:
@@ -182,7 +182,8 @@ fn chip8_placeholder() -> Vec<u8> {
 }
 
 // TODO: review of public vs pub(crate) vs private api
-const CHIP8_INSTR_LEN: u8 = 2u8;
+// TODO: refactor to Chip8InstrLen
+const CHIP8_INSTR_LEN: crate::bbu::SymbolPosition = 0x2;
 
 // lots of code duplication with get_output_bytes TODO FIXME NOTE, somen with get_lex
 
@@ -280,6 +281,7 @@ macro_rules! make_std_xnn {
                 let b: (Chip8ArchReg, Chip8SymAlias) = get_xnn(a);
                 Self { x: b.0, d: b.1 }
             }
+            // TODO: better optimize this
             fn check_symbols(&self) -> bool {
                 match self.d {
                     crate::bbu::ArgSymbol::UnknownData(_) => true,
@@ -571,15 +573,18 @@ fn argcheck(a: &Option<Vec<String>>, i: usize) -> Vec<Chip8Arg> {
 
 macro_rules! gmm {
     ($n:ident,$i:ident) => {{
-        Box::new(<crate::bbu::$n as ArchMacro>::get_lex($i.args))
+        Box::new(<crate::bbu::$n as ArchMcrInst<Chip8Symbol>>::get_lex(
+            $i.args,
+        ))
     }};
 }
 
 // TODO: consider putting these in lexer maybe? idk
 // TODO FIXME: add symbols to macros
-pub fn get_macro(i: crate::parser::ParsedMacro) -> Box<dyn ArchMacro> {
+pub fn get_macro<T: crate::bbu::SymConv>(i: crate::parser::ParsedMacro) -> Box<dyn ArchMcrInst<T>> {
     match i.mcr.to_lowercase().as_str() {
-        "byte" => gmm!(BigByte, i),
+        "byte" => gmm!(Bu8, i),
+        "word" => gmm!(Bu16, i),
         _ => lpanic("macro not supported"),
     }
 }
