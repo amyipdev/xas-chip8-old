@@ -65,9 +65,12 @@ use crate::errors::lpanic;
 // for sections like rodata and BSS. Flags are set based on input ID
 // type from platform.
 
+// TODO: consider phasing out LexOperation, as is no longer necessary
+// keeping things wrapped inside a single-item enum doesn't particularly
+// make much sense
 pub enum LexOperation<T: crate::bbu::SymConv> {
     Instruction(Box<dyn crate::bbu::ArchMcrInst<T>>),
-    Macro(Box<dyn crate::bbu::ArchMacro>),
+    //Macro(Box<dyn crate::bbu::ArchMacro>),
 }
 
 impl<T: crate::bbu::SymConv> std::fmt::Debug for LexOperation<T> {
@@ -76,7 +79,7 @@ impl<T: crate::bbu::SymConv> std::fmt::Debug for LexOperation<T> {
             LexOperation::Instruction(ref i) => {
                 write!(f, "ArchMcrInst: {:02x?}", i.get_output_bytes())
             }
-            LexOperation::Macro(ref j) => write!(f, "ArchMacro: {:02x?}", j.get_output_bytes()),
+            //LexOperation::Macro(ref j) => write!(f, "ArchMacro: {:02x?}", j.get_output_bytes()),
         }
     }
 }
@@ -92,7 +95,7 @@ impl<T: crate::bbu::SymConv> LexOperation<T> {
     pub fn extract_bytes(&self) -> Vec<u8> {
         match self {
             LexOperation::Instruction(a) => a.get_output_bytes(),
-            LexOperation::Macro(b) => b.get_output_bytes(),
+            //LexOperation::Macro(b) => b.get_output_bytes(),
         }
     }
 }
