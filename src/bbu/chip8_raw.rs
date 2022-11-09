@@ -189,6 +189,7 @@ const CHIP8_INSTR_LEN: crate::bbu::SymbolPosition = 0x2;
 
 macro_rules! make_std_const {
     ($nm:ident,$offs:expr) => {
+        #[allow(non_camel_case_types)]
         pub struct $nm {}
         impl<T: crate::bbu::SymConv> ArchMcrInst<T> for $nm {
             fn get_output_bytes(&self) -> Vec<u8> {
@@ -217,6 +218,7 @@ macro_rules! make_std_const {
 
 macro_rules! make_std_nnn {
     ($nm:ident,$offs:expr) => {
+        #[allow(non_camel_case_types)]
         pub struct $nm {
             addr: Chip8SymAlias,
         }
@@ -266,6 +268,7 @@ macro_rules! make_std_nnn {
 // NOTE: optimize
 macro_rules! make_std_xnn {
     ($nm:ident,$offs:expr) => {
+        #[allow(non_camel_case_types)]
         pub struct $nm {
             x: Chip8ArchReg,
             d: Chip8SymAlias,
@@ -316,6 +319,7 @@ macro_rules! make_std_xnn {
 // TODO: general for archinstruction, is vec best? could boxed slice work better?
 macro_rules! make_std_xy {
     ($nm:ident,$offs:expr) => {
+        #[allow(non_camel_case_types)]
         pub struct $nm {
             s: Chip8ArchReg,
             d: Chip8ArchReg,
@@ -353,6 +357,7 @@ macro_rules! make_std_xy {
 macro_rules! make_std_xyn {
     ($nm:ident,$offs:expr) => {
         // TODO: in the future, let's stray away from needing Copy and Clone
+        #[allow(non_camel_case_types)]
         pub struct $nm {
             n: Chip8SymAlias,
             x: Chip8ArchReg,
@@ -412,6 +417,7 @@ macro_rules! make_std_xyn {
 // NOTE wish I had a macro for making these macros
 macro_rules! make_std_efx {
     ($nm:ident,$offs:expr) => {
+        #[allow(non_camel_case_types)]
         pub struct $nm {
             x: Chip8ArchReg,
         }
