@@ -59,6 +59,9 @@ use crate::errors::lpanic;
 pub mod chip8;
 #[cfg(feature = "chip8-raw")]
 pub mod chip8_raw;
+#[cfg(feature = "p6502")]
+pub mod p6502;
+
 pub mod outs;
 
 // potentially wasteful
