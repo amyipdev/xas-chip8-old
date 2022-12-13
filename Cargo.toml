@@ -11,7 +11,8 @@ documentation = "https://docs.rs/libxas"
 # When the README is converted the file name needs to be changed
 # Because of crates we should probably use Markdown
 readme = "README.md"
-#homepage =
+# TODO: create a better homepage
+homepage = "https://github.com/amyipdev/libxas"
 repository = "https://github.com/amyipdev/libxas"
 license = "GPL-2.0-or-later"
 keywords = ["assembly", "library", "assembler", "moddable", "extension"]
