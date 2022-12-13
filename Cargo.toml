@@ -1,7 +1,8 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 [package]
 name = "libxas"
 # v1.0 will be the first "production-ready" version
-version = "0.1.0-rc2x"
+version = "0.1.0"
 edition = "2021"
 authors = ["Amy Parker <apark0006@student.cerritos.edu>"]
 description = "Extendable Assembler library"
@@ -22,6 +23,9 @@ build = false
 
 [dependencies]
 num-traits = "0.2.15"
+# TODO: look into making this an optional dependency
+# I'm not fond of having such a large deadweight crate forced in
+# Also goes along the lines of having std/no-std
 log = "0.4.17"
 
 [lib]
