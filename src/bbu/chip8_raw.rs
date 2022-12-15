@@ -34,11 +34,11 @@ use std::str::FromStr;
 // TODO: reduce repetition of this
 //use crate::bbu::ArchMacro;
 use crate::bbu::ArchMcrInst;
+use crate::bbu::ArgSymbol;
 use crate::bbu::DatSize;
 use crate::bbu::PtrSize;
 use crate::bbu::RcSym;
 use crate::bbu::SymConv;
-use crate::bbu::ArgSymbol;
 
 pub type Chip8DatSize = crate::bbu::GenScal<u8>;
 // TODO: generic displacement size for types without one
@@ -58,9 +58,9 @@ impl SymConv for Chip8Symbol {
     // FIXME FIXME FIXME: into_dat
     fn from_ptr<T: PtrSize>(a: T) -> Self {
         Self {
-            i: ArgSymbol::Pointer(Box::new(
-                <Chip8PtrSize as PtrSize>::from_int::<u16>(a.extract_int::<u16>()),
-            )),
+            i: ArgSymbol::Pointer(Box::new(<Chip8PtrSize as PtrSize>::from_int::<u16>(
+                a.extract_int::<u16>(),
+            ))),
         }
     }
     fn from_dat<T: DatSize>(a: T) -> Self {
@@ -71,18 +71,14 @@ impl SymConv for Chip8Symbol {
         }
     }
     fn into_ptr<T: PtrSize, E: crate::bbu::Integral>(&self) -> T {
-        T::from_int(PtrSize::extract_int::<E>(
-            &**self.i.unwrap_ptr().unwrap(),
-        ))
+        T::from_int(PtrSize::extract_int::<E>(&**self.i.unwrap_ptr().unwrap()))
     }
 }
 
 impl<T: SymConv> crate::bbu::ArchSym<T> for Chip8Symbol {
     fn get_uk_sym(&self) -> Option<RcSym> {
         match &self.i {
-            ArgSymbol::UnknownPointer(i) | ArgSymbol::UnknownData(i) => {
-                Some(i.clone())
-            }
+            ArgSymbol::UnknownPointer(i) | ArgSymbol::UnknownData(i) => Some(i.clone()),
             _ => None,
         }
     }
@@ -97,9 +93,7 @@ macro_rules! gim {
     }};
 }
 
-pub fn get_instruction<T: SymConv>(
-    i: crate::parser::ParsedInstruction,
-) -> Box<dyn ArchMcrInst<T>> {
+pub fn get_instruction<T: SymConv>(i: crate::parser::ParsedInstruction) -> Box<dyn ArchMcrInst<T>> {
     match i.instr.to_lowercase().as_str() {
         // TODO: reduce code dup, tie into the macros beforehand??
         "0nnn" => gim!(Chip8_0NNN, i),
@@ -149,6 +143,10 @@ pub struct Chip8ArchReg {
 impl FromStr for Chip8ArchReg {
     type Err = std::num::ParseIntError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // TODO: since lpanic never returns, the rest of this
+        // can be factored out of the else. also while
+        // it probably gets optimized out, we shouldn't
+        // be calling s.len() multiple times
         if s.len() > 3 || s.len() < 2 {
             lpanic("chip8_raw: unknown register")
         } else {
@@ -157,6 +155,11 @@ impl FromStr for Chip8ArchReg {
             Ok(Chip8ArchReg {
                 n: char::to_digit(
                     if a == 'v' {
+                        // also why are we being so brazen with
+                        // the iterator? why do we generate it
+                        // multiple times? more efficient would
+                        // be to generate it once, .nth(2), and
+                        // then .next()
                         s.chars().nth(3).unwrap()
                     } else {
                         a
@@ -184,6 +187,7 @@ const CHIP8_INSTR_LEN: crate::bbu::SymbolPosition = 0x2;
 
 // lots of code duplication with get_output_bytes TODO FIXME NOTE, somen with get_lex
 
+// TODO: could these just be done with a single struct named Const?
 macro_rules! make_std_const {
     ($nm:ident,$offs:expr) => {
         #[allow(non_camel_case_types)]
@@ -206,6 +210,8 @@ macro_rules! make_std_const {
                 CHIP8_INSTR_LEN
             }
             fn get_placeholder(&self) -> Vec<u8> {
+                // NOTE: this isn't particularly great
+                // for linkers... only really works for rawbin
                 chip8_placeholder()
             }
             fn fulfill_symbol(&mut self, _s: &T, _p: crate::bbu::SymbolPosition) -> () {}
@@ -248,9 +254,7 @@ macro_rules! make_std_nnn {
             fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {
                 match p {
                     0 => {
-                        self.addr = ArgSymbol::Pointer(Box::new(
-                            s.into_ptr::<Chip8PtrSize, u16>(),
-                        ))
+                        self.addr = ArgSymbol::Pointer(Box::new(s.into_ptr::<Chip8PtrSize, u16>()))
                     }
                     _ => lpanic("c8r: unknown positional"),
                 }
@@ -302,10 +306,7 @@ macro_rules! make_std_xnn {
             }
             fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {
                 match p {
-                    0 => {
-                        self.d =
-                            ArgSymbol::Data(Box::new(s.into_ptr::<Chip8DatSize, u8>()))
-                    }
+                    0 => self.d = ArgSymbol::Data(Box::new(s.into_ptr::<Chip8DatSize, u8>())),
                     _ => lpanic("c8r: unknown positional"),
                 }
             }
@@ -399,10 +400,7 @@ macro_rules! make_std_xyn {
             }
             fn fulfill_symbol(&mut self, s: &T, p: crate::bbu::SymbolPosition) -> () {
                 match p {
-                    0 => {
-                        self.n =
-                            ArgSymbol::Data(Box::new(s.into_ptr::<Chip8DatSize, u8>()))
-                    }
+                    0 => self.n = ArgSymbol::Data(Box::new(s.into_ptr::<Chip8DatSize, u8>())),
                     _ => lpanic("c8r: unknown positional"),
                 }
             }

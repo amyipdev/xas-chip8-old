@@ -547,7 +547,7 @@ macro_rules! be_mcr {
             }
             fn get_lex(a: Option<Vec<String>>) -> Self {
                 Self {
-                    x: extract_mem_symbol(&a.unwrap()[0])
+                    x: extract_mem_symbol(&a.unwrap()[0]),
                 }
             }
             // TODO: does this present any problems? for numerics it shouldn't
@@ -558,7 +558,7 @@ macro_rules! be_mcr {
             fn get_symbols(&self) -> USIWrap {
                 match self.x {
                     crate::bbu::ArgSymbol::UnknownPointer(ref a) => Some(vec![(a.clone(), 0)]),
-                    _ => None
+                    _ => None,
                 }
             }
             // GPH is unnecessary for macros currently
@@ -567,9 +567,7 @@ macro_rules! be_mcr {
             }
             fn fulfill_symbol(&mut self, s: &T, p: SymbolPosition) -> () {
                 match p {
-                    0 => {
-                        self.x = ArgSymbol::Pointer(Box::new(s.into_ptr::<GenScal<$u>, $u>()))
-                    }
+                    0 => self.x = ArgSymbol::Pointer(Box::new(s.into_ptr::<GenScal<$u>, $u>())),
                     _ => lpanic("bbu: bemcr: unknown positional"),
                 }
             }
@@ -609,3 +607,10 @@ macro_rules! le_mcr {
 be_mcr!(Bu8, u8);
 be_mcr!(Bu16, u16);
 //be_mcr!(BigWord, u16);
+
+pub fn tlen(i: &Option<Vec<String>>) -> usize {
+    if let Some(ref a) = i {
+        return a.len();
+    }
+    0
+}

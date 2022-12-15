@@ -83,8 +83,7 @@ impl<T: SymConv> std::fmt::Debug for LexOperation<T> {
         match self {
             LexOperation::Instruction(ref i) => {
                 write!(f, "ArchMcrInst: {:02x?}", i.get_output_bytes())
-            }
-            //LexOperation::Macro(ref j) => write!(f, "ArchMacro: {:02x?}", j.get_output_bytes()),
+            } //LexOperation::Macro(ref j) => write!(f, "ArchMacro: {:02x?}", j.get_output_bytes()),
         }
     }
 }
@@ -215,10 +214,7 @@ impl<T: SymConv> Lexer<T> {
     }
 
     // TODO; note VDQ = VecDeque
-    pub fn from_vdq(
-        q: VecDeque<ParsedOperation>,
-        p: crate::platform::Platform,
-    ) -> Self {
+    pub fn from_vdq(q: VecDeque<ParsedOperation>, p: crate::platform::Platform) -> Self {
         Lexer {
             // takes ownership of the VDQ
             q: q,
