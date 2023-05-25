@@ -1,3 +1,8 @@
+This was originally a project to build an extendable assembler. The code base somewhat
+fell apart, and the project is now dead. It's been archived for historical purposes, since
+the CHIP-8 assembler still works (and some of the code may be salvageable for other projects
+under GPLv2). 
+
 <h1 align="center">The Extendable Assembler Library</h1>
 <h3 align="center">libxas, a Bell-style, open-source, fast, Rust-based assembler</h3>
 
